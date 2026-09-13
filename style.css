@@ -110,6 +110,15 @@
   .btn:focus-visible,.char:focus-visible,.trk:focus-visible{outline:3px solid var(--mint);outline-offset:3px;}
   .row{display:flex;gap:2vmin;flex-wrap:wrap;justify-content:center;}
   #note{position:absolute;bottom:2vmin;left:0;right:0;text-align:center;font-size:clamp(10px,1.5vmin,13px);opacity:.55;font-weight:600;}
+  /* title screen: best lap per circuit */
+  .boardLabel{font-family:var(--hud);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(10px,1.5vmin,14px);opacity:.6;}
+  .board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.9vmin;width:min(92%,780px);}
+  .bcard{background:var(--navy2);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.7vmin 1.1vmin .8vmin;text-align:left;overflow:hidden;}
+  .bcard .bn{font-family:var(--hud);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:clamp(9px,1.4vmin,13px);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bcard .bt{font-family:var(--display);font-style:italic;line-height:1;font-size:clamp(15px,2.8vmin,26px);color:var(--sun);font-variant-numeric:tabular-nums;}
+  .bcard .bw{font-size:clamp(8px,1.2vmin,11px);font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.6;min-height:1.1em;}
+  .bcard.empty .bt{color:var(--cream);opacity:.3;}
+  @media (max-width: 560px){ .board{grid-template-columns:repeat(2,minmax(0,1fr));} }
   /* short screens / phones: keep the action buttons pinned top-right and the cards compact */
   @media (max-height: 560px), (pointer: coarse) {
     .screen{justify-content:flex-start;padding-top:7vmin;gap:1.4vmin;}
@@ -123,5 +132,8 @@
     .garage .row{position:absolute;top:2.2vmin;right:2.4vmin;}
     .gpanel{justify-content:flex-start;padding-top:2.4vmin;width:min(52%,460px);}
     #finish .results{font-size:clamp(11px,2vmin,18px);gap:.3vmin 1.6vmin;}
+    .boardLabel{display:none;}
+    .board{width:96%;gap:.6vmin;}
+    .bcard{padding:.5vmin .8vmin .6vmin;}
   }
   @media (prefers-reduced-motion: reduce){.press{animation:none;}}
