@@ -15,7 +15,7 @@ const ORD = n => n + (['th','st','nd','rd'][((n % 100) > 10 && (n % 100) < 14) ?
 
 // circuits: control points are [x, y, height]. Heights give hills, crests and jumps.
 const TRACKS = [
-  { name: 'Sunny Isle', shortcut: [7, 9], sub: 'Beach · easy', ctrl: [[300,1300,0],[400,700,12],[800,350,28],[1400,300,34],[1900,500,16],[2050,900,0],[1750,1150,22],[1350,1050,40],[1100,1300,46],[1300,1650,22],[1750,1750,0],[2000,2050,12],[1600,2200,32],[1000,2100,22],[500,1900,6],[300,1600,0]],
+  { name: 'Sunny Isle', shortcut: [7, 9], sub: 'Beach · easy', rainChance: 0.15, ctrl: [[300,1300,0],[400,700,12],[800,350,28],[1400,300,34],[1900,500,16],[2050,900,0],[1750,1150,22],[1350,1050,40],[1100,1300,46],[1300,1650,22],[1750,1750,0],[2000,2050,12],[1600,2200,32],[1000,2100,22],[500,1900,6],[300,1600,0]],
     ground: '#4CAF50', mottle: ['#43A047', '#58BC5C'], dots: ['#FFD23F', '#FF5A5F', '#FFFFFF'], road: '#5A5F6A', road2: '#62676F', curb: ['#E8E4D8', '#E0392B'], dash: '#D7D2C4',
     skyTop: [0x4F, 0x9F, 0xE0], skyBot: [0xC8, 0xF0, 0xFF], hills: ['#7FC38D', '#5FA874'], fog: '200,232,250', sun: '#FFF3A8', sunI: 1.5, hemi: ['#BFE3FF', '#3E8A3E'], hillAmp: 90,
     scenery: ['palm', 'palm', 'palm', 'rock', 'bush', 'flag'], arch: '#E0392B', music: { bpm: 100, root: 0, mode: 'major' },
@@ -31,22 +31,22 @@ const TRACKS = [
     skyTop: [0x4A, 0x7C, 0xC0], skyBot: [0xD8, 0xEC, 0xFF], hills: ['#C8D8E8', '#A8BCD0'], fog: '210,228,245', sun: '#FFFFFF', sunI: 1.3, hemi: ['#DDEEFF', '#8898A8'], hillAmp: 140,
     scenery: ['pine', 'pine', 'pine', 'rock', 'snowman', 'flag'], arch: '#2E6FD8', music: { bpm: 94, root: 7, mode: 'major' },
     patches: c => { for (const [x, y, r] of [[1500, 1250, 190], [700, 700, 150], [1900, 1950, 120]]) { c.fillStyle = '#9CCCE8'; c.beginPath(); c.ellipse(x, y, r, r * 0.6, -0.3, 0, 7); c.fill(); c.fillStyle = '#BFE3F5'; c.beginPath(); c.ellipse(x, y, r * 0.85, r * 0.5, -0.3, 0, 7); c.fill(); } } },
-  { name: 'Neon Harbor', shortcut: [7, 9], sub: 'Night city · hard', ctrl: [[300,600,0],[600,300,0],[1200,350,30],[1500,650,45],[1200,900,20],[800,850,0],[500,1100,0],[700,1500,25],[1200,1400,42],[1600,1150,18],[2050,1300,0],[2100,1800,20],[1800,2150,38],[1200,2100,12],[800,2200,0],[400,1900,0],[250,1300,0]],
+  { name: 'Neon Harbor', shortcut: [7, 9], sub: 'Night city · hard', rainChance: 0.5, ctrl: [[300,600,0],[600,300,0],[1200,350,30],[1500,650,45],[1200,900,20],[800,850,0],[500,1100,0],[700,1500,25],[1200,1400,42],[1600,1150,18],[2050,1300,0],[2100,1800,20],[1800,2150,38],[1200,2100,12],[800,2200,0],[400,1900,0],[250,1300,0]],
     ground: '#1E2030', mottle: ['#1A1C2A', '#24263A'], dots: ['#2EE6A6', '#FF3FA4', '#FFD23F'], road: '#2C2E40', road2: '#33354A', curb: ['#2EE6A6', '#FF3FA4'], dash: '#FFD23F',
     skyTop: [0x06, 0x08, 0x1C], skyBot: [0x3A, 0x1E, 0x5C], hills: ['#14162A', '#1E2040'], fog: '40,24,70', sun: '#F4F0FF', sunI: 0.35, hemi: ['#4A3A80', '#101020'], hillAmp: 40, night: true,
     scenery: ['tower', 'tower', 'tower', 'lamp', 'billboard', 'lamp'], arch: '#FF3FA4', music: { bpm: 104, root: 9, mode: 'minor' },
     patches: c => { c.fillStyle = '#123A5C'; c.fillRect(0, 0, 2400, 160); c.fillRect(2240, 0, 160, 2400); c.fillStyle = '#1B4E78'; for (let i = 0; i < 60; i++) c.fillRect(Math.random() * 2400, Math.random() * 150, 40, 3); } },
-  { name: 'Canyon Run', shortcut: [6, 8], sub: 'Desert · medium', ctrl: [[350,400,0],[900,250,20],[1500,300,60],[2050,450,90],[2100,1000,125],[1750,1250,80],[1350,1150,40],[1000,1400,20],[1150,1800,60],[1650,1750,105],[2000,2000,70],[1750,2250,30],[1150,2200,0],[600,2050,10],[350,1600,30],[250,1000,10]],
+  { name: 'Canyon Run', shortcut: [6, 8], sub: 'Desert · medium', rainChance: 0.1, ctrl: [[350,400,0],[900,250,20],[1500,300,60],[2050,450,90],[2100,1000,125],[1750,1250,80],[1350,1150,40],[1000,1400,20],[1150,1800,60],[1650,1750,105],[2000,2000,70],[1750,2250,30],[1150,2200,0],[600,2050,10],[350,1600,30],[250,1000,10]],
     ground: '#D9A860', mottle: ['#C9945A', '#E6B872'], dots: ['#8B4A1E', '#F2D386'], road: '#6E6A62', road2: '#78746B', curb: ['#F2E6C8', '#B8321F'], dash: '#E8E0C8',
     skyTop: [0x3A, 0x8C, 0xE0], skyBot: [0xFF, 0xE0, 0xB0], hills: ['#B8643A', '#8A4A2A'], fog: '250,220,170', sun: '#FFF8D0', sunI: 1.7, hemi: ['#FFE8C0', '#8A5A30'], hillAmp: 180,
     scenery: ['cactus', 'cactus', 'rock', 'mesa', 'deadtree', 'flag'], arch: '#B8321F', music: { bpm: 104, root: 4, mode: 'major' },
     patches: c => { c.fillStyle = '#B86A3A'; for (const [x, y, r] of [[500, 2100, 220], [2100, 300, 260], [1400, 1500, 140]]) { c.beginPath(); c.ellipse(x, y, r, r * 0.7, 0.5, 0, 7); c.fill(); } } },
-  { name: 'Mossy Hollow', shortcut: [5, 7], sub: 'Forest · medium', ctrl: [[300,700,0],[700,300,10],[1300,250,25],[1700,500,45],[1500,850,60],[1100,800,40],[800,1050,20],[1000,1400,30],[1500,1300,55],[2000,1400,70],[2150,1900,40],[1700,2200,20],[1100,2100,0],[600,1900,15],[400,1400,30],[250,1050,10]],
+  { name: 'Mossy Hollow', shortcut: [5, 7], sub: 'Forest · medium', rainChance: 0.45, ctrl: [[300,700,0],[700,300,10],[1300,250,25],[1700,500,45],[1500,850,60],[1100,800,40],[800,1050,20],[1000,1400,30],[1500,1300,55],[2000,1400,70],[2150,1900,40],[1700,2200,20],[1100,2100,0],[600,1900,15],[400,1400,30],[250,1050,10]],
     ground: '#2F6B3A', mottle: ['#27592F', '#3B7D45'], dots: ['#8FD37F', '#FFD23F', '#FF7A1F'], road: '#5A4A3A', road2: '#645342', curb: ['#C8B890', '#3A2A1A'], dash: '#A89878',
     skyTop: [0x5A, 0x9A, 0xC8], skyBot: [0xC8, 0xE8, 0xC0], hills: ['#3E7A48', '#2A5A34'], fog: '170,210,170', sun: '#FFF4C8', sunI: 1.1, hemi: ['#BFE8B0', '#1E3A22'], hillAmp: 110,
     scenery: ['bigtree', 'bigtree', 'bush', 'mushroom', 'rock', 'bigtree'], arch: '#8FD37F', music: { bpm: 96, root: 5, mode: 'minor' },
     patches: c => { c.fillStyle = '#4A7A9A'; for (const [x, y, r] of [[1750, 800, 150], [700, 1700, 120]]) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0.2, 0, 7); c.fill(); } } },
-  { name: 'Sky Garden', shortcut: [6, 8], sub: 'Clouds · hard', ctrl: [[400,400,0],[1000,300,30],[1600,350,70],[2100,600,110],[2000,1100,150],[1500,1200,120],[1100,1000,90],[700,1150,60],[600,1600,40],[1000,1900,20],[1500,1700,60],[2000,1900,100],[2100,2250,60],[1500,2300,20],[800,2250,0],[350,1900,0],[300,1000,0]],
+  { name: 'Sky Garden', shortcut: [6, 8], sub: 'Clouds · hard', rainChance: 0.25, ctrl: [[400,400,0],[1000,300,30],[1600,350,70],[2100,600,110],[2000,1100,150],[1500,1200,120],[1100,1000,90],[700,1150,60],[600,1600,40],[1000,1900,20],[1500,1700,60],[2000,1900,100],[2100,2250,60],[1500,2300,20],[800,2250,0],[350,1900,0],[300,1000,0]],
     ground: '#7ED66F', mottle: ['#6CC45F', '#8FE07F'], dots: ['#FF8FC8', '#FFFFFF', '#FFD23F'], road: '#D8D2C8', road2: '#E2DCD2', curb: ['#FFFFFF', '#FF8FC8'], dash: '#B8B0A8',
     skyTop: [0x7A, 0xB8, 0xFF], skyBot: [0xFF, 0xF0, 0xF8], hills: ['#E8F0FF', '#C8D8F0'], fog: '240,240,255', sun: '#FFFFFF', sunI: 1.6, hemi: ['#FFF0F8', '#5A9A50'], hillAmp: 220,
     scenery: ['cherry', 'cherry', 'lantern', 'bush', 'flag', 'cherry'], arch: '#FF8FC8', music: { bpm: 100, root: 9, mode: 'major' },
@@ -214,6 +214,30 @@ function updateParticles(dt) {
   let n = 0; for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; }
   for (const p of parts) { const f = p.life / p.life0; pPos[n * 3] = p.x; pPos[n * 3 + 1] = p.y; pPos[n * 3 + 2] = p.z; pCol[n * 3] = p.r * f; pCol[n * 3 + 1] = p.g * f; pCol[n * 3 + 2] = p.b * f; pSize[n] = p.size * (p.vz > 0 ? (1.6 - f) : 1); n++; }
   pGeo.attributes.position.needsUpdate = true; pGeo.attributes.color.needsUpdate = true; pGeo.attributes.size.needsUpdate = true; pGeo.setDrawRange(0, n);
+}
+// ── rain ─────────────────────────────────────────────────────────────────────
+// Short falling streaks kept in a box around the camera: when a drop leaves the
+// box it is recycled to the top, so a fixed number of lines covers the view.
+const RAIN_N = 900, RAIN_SPAN = 620, RAIN_TOP = 460;
+const rainGeo = new THREE.BufferGeometry(), rainPos = new Float32Array(RAIN_N * 6);
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+const rainMesh = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xcfe2ff, transparent: true, opacity: 0.34, depthWrite: false, fog: false }));
+rainMesh.frustumCulled = false; rainMesh.visible = false; scene.add(rainMesh);
+const drops = [];
+function updateRain(dt) {
+  if (!S.rain) { if (rainMesh.visible) { rainMesh.visible = false; rainGeo.setDrawRange(0, 0); } return; }
+  rainMesh.visible = true;
+  const n = OPT.perf ? RAIN_N / 3 | 0 : RAIN_N, cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+  for (let i = 0; i < n; i++) {
+    let d = drops[i]; if (!d) d = drops[i] = { x: cx, y: cy, z: -1e5 };
+    d.z -= 980 * dt; d.x += 90 * dt;                       // falls fast, slanted by the wind
+    if (d.z < cz - 160 || Math.abs(d.x - cx) > RAIN_SPAN || Math.abs(d.y - cy) > RAIN_SPAN) {
+      d.x = cx + (Math.random() - 0.5) * RAIN_SPAN * 2; d.y = cy + (Math.random() - 0.5) * RAIN_SPAN * 2; d.z = cz + 90 + Math.random() * RAIN_TOP;
+    }
+    const o = i * 6; rainPos[o] = d.x; rainPos[o + 1] = d.y; rainPos[o + 2] = d.z;
+    rainPos[o + 3] = d.x - 3.2; rainPos[o + 4] = d.y; rainPos[o + 5] = d.z - 30;
+  }
+  rainGeo.attributes.position.needsUpdate = true; rainGeo.setDrawRange(0, n * 2);
 }
 const glowTex = dotTex;
 function makeGlow(rgbHex, size, opacity = 0.7) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: rgbHex, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false })); s.scale.set(size, size, 1); return s; }
@@ -406,13 +430,26 @@ function buildTrack(def) {
   const sd = new THREE.Vector3(-0.45, -0.35, 0.62).normalize(); skyMat.uniforms.sunDir.value.copy(sd); sun.userData.dir = sd;
   sun.color.set(def.night ? '#8090C0' : def.sun === '#FF5A3A' ? '#FFB080' : '#FFF4E0'); sun.intensity = def.sunI;
   hemi.color.set(def.hemi[0]); hemi.groundColor.set(def.hemi[1]); hemi.intensity = def.night ? 0.5 : 0.75;
-  scene.fog = new THREE.Fog(new THREE.Color(T.fogRGB[0] / 255, T.fogRGB[1] / 255, T.fogRGB[2] / 255), 900, 4200);
+  const fogC = new THREE.Color(T.fogRGB[0] / 255, T.fogRGB[1] / 255, T.fogRGB[2] / 255);
+  if (S.rain) {
+    // wet weather: grey the sky, pull the fog in, drop the sun, darken and gloss the road
+    const grey = v => v * 0.55 + 0.09;
+    skyMat.uniforms.skyTop.value.set(grey(st[0]), grey(st[1]), grey(st[2]));
+    skyMat.uniforms.skyBot.value.set(grey(sb[0]), grey(sb[1]), grey(sb[2]));
+    sun.intensity = def.sunI * 0.5; hemi.intensity *= 0.92;
+    fogC.lerp(new THREE.Color(0.42, 0.45, 0.52), 0.45);
+    groundMat.color.setScalar(0.74); groundMat.roughness = 0.42;
+    scene.fog = new THREE.Fog(fogC, 520, 2700);
+  } else {
+    groundMat.color.setScalar(1); groundMat.roughness = 0.95;
+    scene.fog = new THREE.Fog(fogC, 900, 4200);
+  }
   skidGeo.setDrawRange(0, 0); skidHead = 0; parts.length = 0;
   drawMiniBase();
 }
 
 // ═══════════════════════ audio: engine, effects and a synthesized soundtrack ═══════════════════════
-const OPT = { music: 0.7, sfx: 0.8, engine: 0.6, mirror: true, perf: false, stick: true }; try { Object.assign(OPT, JSON.parse(localStorage.getItem('pk_opt') || '{}')); } catch (e) {}
+const OPT = { music: 0.7, sfx: 0.8, engine: 0.6, mirror: true, perf: false, stick: true, weather: true }; try { Object.assign(OPT, JSON.parse(localStorage.getItem('pk_opt') || '{}')); } catch (e) {}
 function saveOpt() { try { localStorage.setItem('pk_opt', JSON.stringify(OPT)); } catch (e) {} }
 
 // ── progression ──────────────────────────────────────────────────────────────
@@ -525,7 +562,7 @@ function musicStop() { if (musicState) { clearInterval(musicState.timer); const 
 
 // ═══════════════════════ state ═══════════════════════
 const DIFF = [{ name: 'Easy', skill: 0.76, band: [1.03, 0.86], items: 2.4 }, { name: 'Normal', skill: 0.87, band: [1.12, 0.94], items: 1 }, { name: 'Hard', skill: 0.97, band: [1.16, 0.99], items: 0.6 }];
-const S = { mode: 'title', sel: 0, model: 0, paint: PAINTS[0], trk: 0, gp: null, diff: 1, prevMode: null, goT: 0, throttleAt: null, ghost: null, ghostMesh: null, best: null, finishT: 0, karts: [], hazards: [], t: 0, countdown: 0, raceTime: 0, msg: '', msgT: 0, shake: 0 };
+const S = { mode: 'title', rain: 0, sel: 0, model: 0, paint: PAINTS[0], trk: 0, gp: null, diff: 1, prevMode: null, goT: 0, throttleAt: null, ghost: null, ghostMesh: null, best: null, finishT: 0, karts: [], hazards: [], t: 0, countdown: 0, raceTime: 0, msg: '', msgT: 0, shake: 0 };
 const keys = {}, touch = { steer: 0, drift: false, active: false };
 let player = null;
 function makeKart(ch, idx, lane, model, paint) {
@@ -537,6 +574,7 @@ function makeKart(ch, idx, lane, model, paint) {
   k.mesh = buildKart(ch, model, paint); scene.add(k.mesh); return k;
 }
 function startRace() {
+  S.rain = (OPT.weather && Math.random() < (TRACKS[S.trk].rainChance || 0)) ? 1 : 0;
   for (const k of S.karts) scene.remove(k.mesh); for (const h of S.hazards) if (h.mesh) scene.remove(h.mesh);
   buildTrack(TRACKS[S.trk]);
   S.karts = []; S.hazards = []; S.raceTime = 0; S.countdown = 4.2; S.msg = ''; S.mode = 'countdown'; introT = 0;
@@ -544,7 +582,7 @@ function startRace() {
   const usedPaint = [S.paint];
   order.forEach((ci, i) => { let mdl = KART_MODELS[S.model], pt = S.paint; if (i) { mdl = KART_MODELS[(Math.random() * KART_MODELS.length) | 0]; const free = PAINTS.filter(p => !usedPaint.includes(p)); pt = free.length ? free[(Math.random() * free.length) | 0] : CHARS[ci].body; usedPaint.push(pt); } const k = makeKart(CHARS[ci], i, (i % 2 ? 30 : -30), mdl, pt); k.ai = i !== 0; S.karts.push(k); });
   player = S.karts[0]; camState.a = player.a; camState.fov = 62;
-  showScreen(null); ui.hud.style.display = 'block'; ui.trackName.textContent = T.name + (S.gp ? ' · ' + S.gp.name + ' race ' + (S.gp.race + 1) + ' of ' + S.gp.list.length : '');
+  showScreen(null); ui.hud.style.display = 'block'; ui.trackName.textContent = T.name + (S.rain ? ' · RAIN' : '') + (S.gp ? ' · ' + S.gp.name + ' race ' + (S.gp.race + 1) + ' of ' + S.gp.list.length : '');
   setItemIcon(null); ui.center.textContent = ''; lastCount = 5; lastRank = 0; S.throttleAt = null;
   if (S.ghostMesh) { scene.remove(S.ghostMesh); S.ghostMesh = null; } S.best = null;
   try { const b = JSON.parse(localStorage.getItem('pk_best_' + S.trk) || 'null'); if (b && b.rec && b.rec.length > 20) { S.best = b; S.ghostMesh = ghostKart(CHARS[b.ch] || CHARS[0], KART_MODELS[b.model] || KART_MODELS[0], b.paint || '#FFFFFF'); S.ghostMesh.matrixAutoUpdate = true; S.ghostMesh.visible = false; scene.add(S.ghostMesh); } } catch (e) {}
@@ -605,7 +643,7 @@ function updateKart(k, dt) {
   k.a += dA;
   const nv = k.v * Math.cos(dA) + k.vlat * Math.sin(dA), nl = -k.v * Math.sin(dA) + k.vlat * Math.cos(dA); k.v = nv; k.vlat = nl;
   k.steer += (steer - k.steer) * Math.min(1, dt * 12);
-  const grip = k.air ? 0.5 : k.drift ? 10 : 14, mag0 = Math.hypot(k.v, k.vlat);
+  const grip = (k.air ? 0.5 : k.drift ? 10 : 14) * (S.rain ? 0.87 : 1), mag0 = Math.hypot(k.v, k.vlat);
   k.vlat -= k.vlat * Math.min(1, grip * dt);
   if (k.drift && mag0 > 1) { const mag1 = Math.hypot(k.v, k.vlat), want = mag1 + (mag0 - mag1) * 0.85; if (mag1 > 1) { k.v *= want / mag1; k.vlat *= want / mag1; } }
   if (!onRoad) k.vlat *= Math.pow(0.05, dt);
@@ -727,7 +765,7 @@ function updateWorld(dt) {
   }
   S.hazards = S.hazards.filter(h => h.life > 0);
   if (S.shake > 0) S.shake -= dt;
-  updateParticles(dt);
+  updateParticles(dt); updateRain(dt);
 }
 
 // ═══════════════════════ scene sync & cinematic camera ═══════════════════════
@@ -812,7 +850,7 @@ function postFX() {
 }
 
 // ═══════════════════════ HUD & screens ═══════════════════════
-const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
+const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'optWeather', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
 const miniBase = document.createElement('canvas'); miniBase.width = 180; miniBase.height = 180;
 function drawOutline(c, size, xs, ys, lineW, col) { const k = size / WORLD; c.beginPath(); c.moveTo(xs[0] * k, ys[0] * k); for (let i = 1; i < xs.length; i++) c.lineTo(xs[i] * k, ys[i] * k); c.closePath(); c.lineCap = c.lineJoin = 'round'; c.lineWidth = lineW + 4; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.stroke(); c.lineWidth = lineW; c.strokeStyle = col; c.stroke(); }
 function drawMiniBase() { const c = miniBase.getContext('2d'); c.clearRect(0, 0, 180, 180); drawOutline(c, 180, TX, TY, 9, '#E8E4D8'); const d = tdir(0), k = 180 / WORLD; c.strokeStyle = '#FF5A5F'; c.lineWidth = 4; c.beginPath(); c.moveTo(TX[0] * k - d[1] * 7, TY[0] * k + d[0] * 7); c.lineTo(TX[0] * k + d[1] * 7, TY[0] * k - d[0] * 7); c.stroke(); }
@@ -864,7 +902,7 @@ function showScreen(name) { for (const s of ['title', 'select', 'garage', 'track
 // ── pause & settings ──
 function pauseGame() { if (S.mode !== 'race' && S.mode !== 'countdown') return; S.prevMode = S.mode; S.mode = 'pause'; ui.pause.hidden = false; SFX.pause(); if (musicState) musicState.gain.gain.setTargetAtTime(0.08 * OPT.music, AC.currentTime, 0.2); }
 function resumeGame() { if (S.mode !== 'pause') return; S.mode = S.prevMode; ui.pause.hidden = true; ui.settings.hidden = true; last = performance.now(); if (musicState) musicState.gain.gain.setTargetAtTime(musicOn ? 0.42 * OPT.music : 0, AC.currentTime, 0.3); }
-function openSettings(from) { refreshUnlocks(); S.settingsFrom = from; ui.optMusic.value = OPT.music; ui.optSfx.value = OPT.sfx; ui.optEngine.value = OPT.engine; ui.optMirror.checked = OPT.mirror; ui.optPerf.checked = OPT.perf; ui.settings.hidden = false; if (from === 'title') { ui.title.hidden = true; S.mode = 'settings'; } else ui.pause.hidden = true; }
+function openSettings(from) { refreshUnlocks(); S.settingsFrom = from; ui.optMusic.value = OPT.music; ui.optSfx.value = OPT.sfx; ui.optEngine.value = OPT.engine; ui.optMirror.checked = OPT.mirror; ui.optWeather.checked = OPT.weather; ui.optPerf.checked = OPT.perf; ui.settings.hidden = false; if (from === 'title') { ui.title.hidden = true; S.mode = 'settings'; } else ui.pause.hidden = true; }
 function closeSettings() { ui.settings.hidden = true; if (S.settingsFrom === 'title') { S.mode = 'title'; ui.title.hidden = false; } else ui.pause.hidden = false; }
 function applyOpt() {
   saveOpt(); if (musicState && AC) musicState.gain.gain.setTargetAtTime(musicOn ? 0.42 * OPT.music : 0, AC.currentTime, 0.2); if (sfxBus) sfxBus.gain.value = OPT.sfx;
@@ -965,6 +1003,7 @@ ui.resetProg.addEventListener('click', () => {
   resetArmed = Date.now() + 5000; ui.resetProg.textContent = 'TAP AGAIN TO CONFIRM';
   setTimeout(() => { if (resetArmed) { resetArmed = 0; ui.resetProg.textContent = 'RESET PROGRESS'; } }, 5000);
 });
+ui.optWeather.addEventListener('change', () => { OPT.weather = ui.optWeather.checked; saveOpt(); });
 ui.optMirror.addEventListener('change', () => { OPT.mirror = ui.optMirror.checked; applyOpt(); }); ui.optPerf.addEventListener('change', () => { OPT.perf = ui.optPerf.checked; applyOpt(); });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; touch.steer = 0; touch.drift = false; });
 const isTouchDevice = matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
@@ -1018,12 +1057,12 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.5'; // PEEKEE_VERSION=v9.5
+const VERSION = 'v9.6'; // PEEKEE_VERSION=v9.6
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
 // hidden test hooks (used by automated checks; harmless in play)
 window.__advance = sec => { for (let i = 0; i < sec * 60; i++) { const dt = 1 / 60; if (S.mode === 'countdown') { S.countdown -= dt; if (S.countdown <= 0.3) S.mode = 'race'; updateWorld(dt); } else if (S.mode === 'race' || S.mode === 'finish') { if (S.mode === 'race') S.raceTime += dt; updateWorld(dt); } } };
-window.__state = () => player ? { mode: S.mode, lap: player.lap, v: Math.round(player.v), z: Math.round(player.z), air: player.air, rank: player.rank, idx: player.idx, finished: player.finished, jumps: window.__jumps || 0, hazards: S.hazards.length, gp: S.gp && S.gp.race } : { mode: S.mode };
+window.__state = () => player ? { mode: S.mode, rain: S.rain, lap: player.lap, v: Math.round(player.v), z: Math.round(player.z), air: player.air, rank: player.rank, idx: player.idx, finished: player.finished, jumps: window.__jumps || 0, hazards: S.hazards.length, gp: S.gp && S.gp.race } : { mode: S.mode };
 requestAnimationFrame(loop);
 })();

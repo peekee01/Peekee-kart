@@ -90,20 +90,24 @@ Built into `game.js`, harmless during normal play:
 Work these in order. Each one is its own commit, its own version bump, and its own
 push, so any single one can be reverted without losing the others.
 
-1. **Per-track leaderboard on the title screen** — best times per circuit.
-   Cheapest win: the data already exists. `pk_best_<track>` in localStorage holds
+1. ~~**Per-track leaderboard on the title screen**~~ — **shipped in v9.4.**
+   The data already existed. `pk_best_<track>` in localStorage holds
    `{ time, rec, ch, model, paint }` per circuit and already drives the ghost kart.
    Today that best time is only visible in the small `#lapTimes` HUD corner during a
    race. This is mostly a layout job — no new game logic.
-2. **Progression and unlocks** — Summit Cup unlocked by an Island Cup podium; extra
-   paints unlocked by playing. Cup standings and points already work (`startGP`,
+2. ~~**Progression and unlocks**~~ — **shipped in v9.5.** Summit Cup unlocked by an
+   Island Cup podium; extra paints unlocked by playing. Cup standings and points already work (`startGP`,
    `GP_POINTS`, `S.gp.points`); follow the existing save pattern with a `pk_progress`
    key. Unlock generously for players who already have progress — never take away
    access someone already had. Add a **reset progress** button to Settings at the same
    time, so a clean slate is testable.
-3. **Weather** — rain, and how it affects grip and look. The riskiest item: grip
-   changes touch the handling model, which is the part most likely to wreck the
-   driving feel. Test heavily by actually driving.
+3. ~~**Weather**~~ — **shipped in v9.6.** Rain falls on some circuits (chance per
+   circuit via `rainChance`; none on the snow, volcano or cavern tracks). It greys
+   the sky, pulls the fog in, dims the sun, darkens and glosses the road, and cuts
+   grip by 13%. A Weather checkbox in Settings turns it off. `window.__state()`
+   now reports `rain` so tests can see it.
+   **Still needs a human verdict on how the wet handling feels** — 13% was chosen
+   to be noticeable but not slippery, and only driving it can confirm that.
 4. **More circuits, and more variety in the existing ones** — beyond the current eight.
    The owner specifically wants circuits that differ as *race tracks*, not just as
    scenery: genuinely different corner types and rhythms — hairpins, long sweepers,
