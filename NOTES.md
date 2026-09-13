@@ -110,7 +110,7 @@ push, so any single one can be reverted without losing the others.
    to be noticeable but not slippery, and only driving it can confirm that.
 4. **More circuits** — **four added in v9.7** (twelve total, three cups). Still open:
    the original eight are all still gentle sweepers, see below.
-5. **Better character portraits** — the roster art on the character-select screen.
+5. ~~**Better character portraits**~~ — **shipped in v9.8.** Drawn in a 120-unit space and scaled to a 320px canvas, with a racer-tinted backing plate (without it the near-navy helmets vanished into the card).
 6. **Visual and graphics polish pass** — a further iteration on the whole look: more
    detail, more modern, smoother. Same "Xbox not SNES" bar as everything else. Must
    not cost so much performance that phones suffer; the Performance-mode setting is

@@ -958,21 +958,90 @@ function buildGarageUI() {
 function renderGarage(dt) { gAngle += dt * 0.6; if (gKart) gKart.rotation.z = gAngle; renderer.render(gScene, gCam); fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height); }
 function buildRoster() {
   ui.roster.innerHTML = '';
-  CHARS.forEach((ch, i) => { const el = document.createElement('div'); el.className = 'char'; el.tabIndex = 0; const cv = document.createElement('canvas'); cv.width = 120; cv.height = 120; drawPortrait(cv.getContext('2d'), ch); el.appendChild(cv); const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = ch.name; el.appendChild(nm); const st = document.createElement('div'); st.className = 'st'; st.textContent = ch.kind + ' · ' + ch.st; el.appendChild(st); el.addEventListener('click', () => { S.sel = i; S.paint = CHARS[i].body; refreshRoster(); }); el.addEventListener('dblclick', () => { S.sel = i; S.paint = CHARS[i].body; showScreen('garage'); }); ui.roster.appendChild(el); });
+  CHARS.forEach((ch, i) => { const el = document.createElement('div'); el.className = 'char'; el.tabIndex = 0; const cv = document.createElement('canvas'); cv.width = 320; cv.height = 320; drawPortrait(cv.getContext('2d'), ch); el.appendChild(cv); const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = ch.name; el.appendChild(nm); const st = document.createElement('div'); st.className = 'st'; st.textContent = ch.kind + ' · ' + ch.st; el.appendChild(st); el.addEventListener('click', () => { S.sel = i; S.paint = CHARS[i].body; refreshRoster(); }); el.addEventListener('dblclick', () => { S.sel = i; S.paint = CHARS[i].body; showScreen('garage'); }); ui.roster.appendChild(el); });
   refreshRoster(); ui.tracks.innerHTML = '';
   TRACKS.forEach((t, i) => { const el = document.createElement('div'); el.className = 'trk'; el.tabIndex = 0; const cv = document.createElement('canvas'); cv.width = 140; cv.height = 140; const c = cv.getContext('2d'); c.fillStyle = t.ground; c.fillRect(0, 0, 140, 140); c.fillStyle = `rgb(${t.skyBot.join(',')})`; c.globalAlpha = 0.25; c.fillRect(0, 0, 140, 140); c.globalAlpha = 1; const [xs, ys] = splineFor(t.ctrl, 240); c.save(); c.translate(8, 8); drawOutline(c, 124, xs, ys, 7, t.curb[0]); c.restore(); el.appendChild(cv); const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = t.name; el.appendChild(nm); const st = document.createElement('div'); st.className = 'st'; st.textContent = t.sub; el.appendChild(st); el.addEventListener('click', () => { S.trk = i; refreshTracks(); }); el.addEventListener('dblclick', () => { S.trk = i; S.gp = null; startRace(); }); ui.tracks.appendChild(el); });
   refreshTracks();
 }
 function refreshRoster() { [...ui.roster.children].forEach((el, i) => el.classList.toggle('sel', i === S.sel)); }
 function refreshTracks() { [...ui.tracks.children].forEach((el, i) => el.classList.toggle('sel', i === S.trk)); }
+// blend two hex colours, for shading the portraits
+const mixHex = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), ch2 = sh => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
+  return `rgb(${ch2(16)},${ch2(8)},${ch2(0)})`; };
+// Racer portrait: drawn in a 120-unit space and scaled to whatever the canvas is,
+// so the card can be as crisp as the screen allows. The tinted backing plate matters -
+// without it the racers with near-navy helmets vanish into the card behind them.
 function drawPortrait(c, ch) {
-  c.clearRect(0, 0, 120, 120); c.fillStyle = ch.body; rr(c, 20, 60, 80, 34, 10); c.fill(); c.fillStyle = '#22242C'; for (const x of [26, 74]) rr(c, x, 84, 20, 18, 5), c.fill(); c.fillStyle = ch.accent; rr(c, 84, 54, 14, 20, 4); c.fill(); c.fillStyle = ch.suit; rr(c, 44, 52, 24, 16, 4); c.fill();
-  const hg = c.createRadialGradient(48, 34, 4, 56, 42, 24); hg.addColorStop(0, '#FFFFFF'); hg.addColorStop(0.25, ch.helmet); hg.addColorStop(1, ch.helmet); c.fillStyle = hg; c.beginPath(); c.arc(56, 42, 22, 0, 7); c.fill();
-  c.fillStyle = '#1B1F3B'; c.beginPath(); c.ellipse(64, 44, 12, 8, 0, 0, 7); c.fill(); c.fillStyle = ch.accent; c.fillRect(52, 18, 8, 12); c.fillStyle = ch.helmet;
-  if (ch.kind === 'Fox' || ch.kind === 'Cat') { c.beginPath(); c.moveTo(38, 30); c.lineTo(44, 10); c.lineTo(52, 26); c.fill(); c.beginPath(); c.moveTo(74, 30); c.lineTo(68, 10); c.lineTo(60, 26); c.fill(); }
-  if (ch.kind === 'Robot') { c.fillRect(54, 8, 4, 14); c.fillStyle = '#FF5A5F'; c.beginPath(); c.arc(56, 6, 5, 0, 7); c.fill(); }
-  if (ch.kind === 'Bear' || ch.kind === 'Monkey') { c.beginPath(); c.arc(38, 26, 8, 0, 7); c.arc(74, 26, 8, 0, 7); c.fill(); }
-  if (ch.kind === 'Dino') { c.fillStyle = ch.body; for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(42 + i * 12, 24); c.lineTo(48 + i * 12, 10); c.lineTo(54 + i * 12, 24); c.fill(); } }
+  const K = c.canvas.width / 120;
+  c.setTransform(K, 0, 0, K, 0, 0);
+  c.clearRect(0, 0, 120, 120);
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  const light = t => mixHex(ch.body, '#FFFFFF', t), dark = t => mixHex(ch.body, '#000000', t);
+
+  const bg = c.createRadialGradient(56, 30, 4, 60, 74, 84);
+  bg.addColorStop(0, mixHex(ch.body, '#FFFFFF', 0.30)); bg.addColorStop(0.5, mixHex(ch.body, '#141735', 0.70)); bg.addColorStop(1, '#12142F');
+  c.fillStyle = bg; rr(c, 1, 1, 118, 118, 15); c.fill();
+
+  c.fillStyle = 'rgba(0,0,0,0.34)'; c.beginPath(); c.ellipse(60, 104, 42, 6.5, 0, 0, 7); c.fill();
+
+  // kart body, lit from above
+  const bodyG = c.createLinearGradient(0, 58, 0, 96);
+  bodyG.addColorStop(0, light(0.30)); bodyG.addColorStop(0.55, ch.body); bodyG.addColorStop(1, dark(0.36));
+  c.fillStyle = bodyG; rr(c, 17, 60, 86, 34, 11); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.30)'; c.lineWidth = 1.3; rr(c, 17.8, 60.8, 84.4, 32.4, 10.4); c.stroke();
+  c.fillStyle = ch.accent; rr(c, 87, 51, 14, 23, 5); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.28)'; rr(c, 88.5, 52.5, 11, 6, 3); c.fill();
+  c.fillStyle = ch.suit; rr(c, 41, 49, 27, 19, 6); c.fill();
+  c.fillStyle = 'rgba(0,0,0,0.18)'; rr(c, 41, 62, 27, 6, 3); c.fill();
+
+  for (const x of [23, 71]) {
+    c.fillStyle = '#181A21'; rr(c, x, 83, 25, 21, 7.5); c.fill();
+    c.fillStyle = '#2B2E39'; rr(c, x + 3, 86, 19, 15, 5.5); c.fill();
+    c.fillStyle = mixHex(ch.accent, '#FFFFFF', 0.25); c.beginPath(); c.arc(x + 12.5, 93.5, 4.4, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.22)'; c.beginPath(); c.arc(x + 11, 92, 1.8, 0, 7); c.fill();
+  }
+
+  // ears and crests sit behind the head
+  c.fillStyle = dark(0.12);
+  if (ch.kind === 'Fox' || ch.kind === 'Cat') {
+    for (const [bx, tx, ty] of [[40, 33, 9], [66, 72, 11]]) { c.beginPath(); c.moveTo(bx, 34); c.lineTo(tx, ty); c.lineTo(bx + 13, 30); c.closePath(); c.fill(); }
+    c.fillStyle = mixHex(ch.accent, '#FFFFFF', 0.35);
+    for (const [bx, tx, ty] of [[43, 36.5, 16], [66.5, 70, 17.5]]) { c.beginPath(); c.moveTo(bx, 32); c.lineTo(tx, ty); c.lineTo(bx + 8, 29); c.closePath(); c.fill(); }
+  } else if (ch.kind === 'Bear' || ch.kind === 'Monkey') {
+    for (const x of [40, 72]) { c.beginPath(); c.arc(x, 25, 9, 0, 7); c.fill(); }
+    c.fillStyle = mixHex(ch.accent, '#FFFFFF', 0.3); for (const x of [40, 72]) { c.beginPath(); c.arc(x, 25, 4.6, 0, 7); c.fill(); }
+  } else if (ch.kind === 'Dino') {
+    for (let i = 0; i < 4; i++) { c.fillStyle = i % 2 ? mixHex(ch.accent, '#FFFFFF', 0.2) : dark(0.1); c.beginPath(); c.moveTo(38 + i * 11, 28); c.lineTo(44 + i * 11, 10 + i * 1.5); c.lineTo(50 + i * 11, 28); c.closePath(); c.fill(); }
+  } else if (ch.kind === 'Robot') {
+    c.strokeStyle = mixHex(ch.helmet, '#000000', 0.2); c.lineWidth = 3.2; c.beginPath(); c.moveTo(55, 24); c.lineTo(55, 8); c.stroke();
+    c.fillStyle = ch.accent; c.beginPath(); c.arc(55, 6, 5.2, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.arc(53.6, 4.6, 1.9, 0, 7); c.fill();
+  }
+
+  // head, then the helmet shell over the top of it
+  const hg = c.createRadialGradient(48, 30, 3, 56, 44, 27);
+  hg.addColorStop(0, light(0.42)); hg.addColorStop(0.45, ch.body); hg.addColorStop(1, dark(0.34));
+  c.fillStyle = hg; c.beginPath(); c.arc(56, 42, 21.5, 0, 7); c.fill();
+
+  if (ch.kind === 'Robot') {                       // a robot gets a jaw plate, not a snout
+    c.fillStyle = mixHex(ch.helmet, '#000000', 0.18); rr(c, 63, 44, 17, 11, 4); c.fill();
+    c.fillStyle = mixHex(ch.accent, '#FFFFFF', 0.45); for (let i = 0; i < 3; i++) rr(c, 66 + i * 4.2, 47, 2.4, 5, 1), c.fill();
+  } else {
+    c.fillStyle = light(0.55); c.beginPath(); c.ellipse(73, 48, 11.5, 8.5, -0.12, 0, 7); c.fill();
+    c.fillStyle = dark(0.55); c.beginPath(); c.ellipse(81.5, 45.5, 3.4, 2.7, -0.2, 0, 7); c.fill();
+  }
+
+  const helm = c.createLinearGradient(36, 22, 70, 46);
+  helm.addColorStop(0, mixHex(ch.helmet, '#FFFFFF', 0.42)); helm.addColorStop(0.45, ch.helmet); helm.addColorStop(1, mixHex(ch.helmet, '#000000', 0.28));
+  c.fillStyle = helm; c.beginPath(); c.arc(56, 42, 22.5, Math.PI * 1.02, Math.PI * 2.12); c.closePath(); c.fill();
+  c.fillStyle = ch.accent; c.beginPath(); c.arc(56, 42, 22.5, Math.PI * 1.30, Math.PI * 1.44); c.arc(56, 42, 12, Math.PI * 1.44, Math.PI * 1.30, true); c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 2.2; c.beginPath(); c.arc(56, 42, 17.5, Math.PI * 1.12, Math.PI * 1.42); c.stroke();
+
+  // visor
+  c.fillStyle = '#171A2E'; c.beginPath(); c.ellipse(66, 39, 13, 8.2, -0.16, 0, 7); c.fill();
+  c.fillStyle = 'rgba(140,190,255,0.30)'; c.beginPath(); c.ellipse(66, 39, 11.4, 6.8, -0.16, 0, 7); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.75)'; c.lineWidth = 2; c.beginPath(); c.moveTo(59.5, 35.5); c.lineTo(66.5, 33.8); c.stroke();
+  c.setTransform(1, 0, 0, 1, 0, 0);
 }
 function showResults() {
   S.mode = 'finish'; const order = S.karts.slice().sort((a, b) => a.rank - b.rank);
@@ -1087,7 +1156,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.7'; // PEEKEE_VERSION=v9.7
+const VERSION = 'v9.8'; // PEEKEE_VERSION=v9.8
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
