@@ -172,7 +172,7 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadow
 renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, 16 / 9, 1, 9000); camera.up.set(0, 0, 1);
-const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.castShadow = true; sun.shadow.mapSize.set(3072, 3072); sun.shadow.radius = 2.2;
 sun.shadow.camera.left = -320; sun.shadow.camera.right = 320; sun.shadow.camera.top = 320; sun.shadow.camera.bottom = -320; sun.shadow.camera.near = 50; sun.shadow.camera.far = 1600; sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.6;
 scene.add(sun); scene.add(sun.target);
 const hemi = new THREE.HemisphereLight(0xbfe3ff, 0x3e8a3e, 0.7); scene.add(hemi);
@@ -208,9 +208,12 @@ const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: fals
         float h = -0.01 + (0.11 + fi * 0.05) * pow(r, 1.7) * 1.6 + fi * 0.01;
         if (el < h) { vec3 mc = mix(hillA, hillB, fi * 0.5); float slope = fbm(vec2(u * freq * 3.0 + fi * 4.0, el * 40.0)) - 0.5; mc *= 0.85 + slope * 0.5 + smoothstep(h - 0.05, h, el) * 0.35; c = mix(mc, skyBot, 0.12 + fi * 0.3); }
       }
+      // a sub-pixel of noise breaks up the banding you otherwise get across a big smooth sky
+      c += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
       gl_FragColor = vec4(c, 1.0);
     }` });
 const sky = new THREE.Mesh(new THREE.SphereGeometry(6000, 48, 24), skyMat); scene.add(sky);
+
 
 // skid marks: one dynamic buffer of quads, reused in a ring
 const SKID_MAX = 1200; let skidHead = 0;
@@ -291,14 +294,14 @@ function boxM(cx, cy, cz, lx, ly, lz, m) { const o = mesh(new THREE.BoxGeometry(
 
 // ═══════════════════════ kart model ═══════════════════════
 const KGEO_COMMON = {
-  fwing: loftGeom([{ x: 11.5, hw: 8.5, zc: 4.6, hh: 0.55 }, { x: 13.5, hw: 9, zc: 4.6, hh: 0.6 }, { x: 15.5, hw: 7.5, zc: 4.7, hh: 0.45 }], 12, 0.4),
-  torso: loftGeom([{ x: -5, hw: 3.4, zc: 14.6, hh: 2.6 }, { x: -1.5, hw: 3.6, zc: 14.8, hh: 2.9 }, { x: 0.5, hw: 2.6, zc: 14.4, hh: 2.2 }], 12, 0.6),
-  arm: loftGeom([{ x: -1, hw: 1, zc: 14.2, hh: 1 }, { x: 3, hw: 0.9, zc: 13.6, hh: 0.9 }], 8, 0.9),
-  intake: loftGeom([{ x: -11, hw: 1.6, zc: 12.9, hh: 1 }, { x: -8, hw: 1.9, zc: 13.1, hh: 1.2 }], 10, 0.8),
-  exhaust: loftGeom([{ x: -15.5, hw: 1, zc: 6.6, hh: 1 }, { x: -12.5, hw: 1.1, zc: 6.6, hh: 1.1 }], 10, 0.9),
-  helmet: new THREE.SphereGeometry(5, 24, 16), visor: new THREE.SphereGeometry(5.15, 20, 10, -0.9, 1.8, 1.0, 1.2),
-  ear: new THREE.ConeGeometry(1.5, 4, 8), ball: new THREE.SphereGeometry(1.6, 10, 8), spike: new THREE.ConeGeometry(1.2, 3.5, 6), antenna: new THREE.CylinderGeometry(0.3, 0.3, 4, 6),
-  wheelRing: new THREE.TorusGeometry(4.2, 0.5, 8, 20), glove: new THREE.SphereGeometry(1.1, 10, 8), light: new THREE.SphereGeometry(1, 10, 8),
+  fwing: loftGeom([{ x: 11.5, hw: 8.5, zc: 4.6, hh: 0.55 }, { x: 13.5, hw: 9, zc: 4.6, hh: 0.6 }, { x: 15.5, hw: 7.5, zc: 4.7, hh: 0.45 }], 18, 0.4),
+  torso: loftGeom([{ x: -5, hw: 3.4, zc: 14.6, hh: 2.6 }, { x: -1.5, hw: 3.6, zc: 14.8, hh: 2.9 }, { x: 0.5, hw: 2.6, zc: 14.4, hh: 2.2 }], 18, 0.6),
+  arm: loftGeom([{ x: -1, hw: 1, zc: 14.2, hh: 1 }, { x: 3, hw: 0.9, zc: 13.6, hh: 0.9 }], 14, 0.9),
+  intake: loftGeom([{ x: -11, hw: 1.6, zc: 12.9, hh: 1 }, { x: -8, hw: 1.9, zc: 13.1, hh: 1.2 }], 16, 0.8),
+  exhaust: loftGeom([{ x: -15.5, hw: 1, zc: 6.6, hh: 1 }, { x: -12.5, hw: 1.1, zc: 6.6, hh: 1.1 }], 16, 0.9),
+  helmet: new THREE.SphereGeometry(5, 34, 24), visor: new THREE.SphereGeometry(5.15, 30, 16, -0.9, 1.8, 1.0, 1.2),
+  ear: new THREE.ConeGeometry(1.5, 4, 16), ball: new THREE.SphereGeometry(1.6, 16, 12), spike: new THREE.ConeGeometry(1.2, 3.5, 12), antenna: new THREE.CylinderGeometry(0.3, 0.3, 4, 10),
+  wheelRing: new THREE.TorusGeometry(4.2, 0.5, 12, 30), glove: new THREE.SphereGeometry(1.1, 16, 10), light: new THREE.SphereGeometry(1, 16, 10),
 };
 const KGEO_MODEL = {};
 function modelGeo(m) {
@@ -306,8 +309,8 @@ function modelGeo(m) {
   const W = m.w, H = m.h, n = m.nose;
   const g = {
     body: loftGeom([{ x: -13.5, hw: 4.5 * W, zc: 8.4, hh: 2.2 * H }, { x: -10, hw: 6.4 * W, zc: 8.8, hh: 3.4 * H }, { x: -5, hw: 7 * W, zc: 8.6, hh: 3.8 * H }, { x: 1, hw: 7 * W, zc: 8.3, hh: 3.6 * H }, { x: 6 + n * 0.4, hw: 6.4 * W, zc: 8, hh: 3.1 * H }, { x: 10.5 + n * 0.8, hw: 4.8 * W, zc: 7.7, hh: 2.5 * H }, { x: 14.5 + n, hw: 2.2 * W, zc: 7.5, hh: 1.4 * H }], 20, m.k),
-    pod: loftGeom([{ x: -9, hw: 2.4 * W, zc: 5.6, hh: 1.8 * H }, { x: -4, hw: 3.2 * W, zc: 5.8, hh: 2.3 * H }, { x: 2, hw: 3 * W, zc: 5.7, hh: 2.1 * H }, { x: 5, hw: 1.6 * W, zc: 5.5, hh: 1.3 * H }], 14, Math.min(0.7, m.k + 0.1)),
-    rwing: loftGeom([{ x: -14.8, hw: 8 * W, zc: 16.6 * H, hh: 0.6 }, { x: -13, hw: 8.4 * W, zc: 16.5 * H, hh: 0.75 }, { x: -11, hw: 7.6 * W, zc: 16.4 * H, hh: 0.55 }], 12, 0.4),
+    pod: loftGeom([{ x: -9, hw: 2.4 * W, zc: 5.6, hh: 1.8 * H }, { x: -4, hw: 3.2 * W, zc: 5.8, hh: 2.3 * H }, { x: 2, hw: 3 * W, zc: 5.7, hh: 2.1 * H }, { x: 5, hw: 1.6 * W, zc: 5.5, hh: 1.3 * H }], 22, Math.min(0.7, m.k + 0.1)),
+    rwing: loftGeom([{ x: -14.8, hw: 8 * W, zc: 16.6 * H, hh: 0.6 }, { x: -13, hw: 8.4 * W, zc: 16.5 * H, hh: 0.75 }, { x: -11, hw: 7.6 * W, zc: 16.4 * H, hh: 0.55 }], 18, 0.4),
     tyreF: new THREE.CylinderGeometry(m.wF, m.wF, 3.4, 20), tyreR: new THREE.CylinderGeometry(m.wR, m.wR, 4.2, 20),
     rimF: new THREE.CylinderGeometry(m.wF * 0.64, m.wF * 0.64, 3.7, 16), rimR: new THREE.CylinderGeometry(m.wR * 0.65, m.wR * 0.65, 4.5, 16),
   };
@@ -1156,7 +1159,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.8'; // PEEKEE_VERSION=v9.8
+const VERSION = 'v9.9'; // PEEKEE_VERSION=v9.9
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);

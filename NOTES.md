@@ -23,9 +23,9 @@ stale copy after a release.
 
 Three places must agree, or players get a stale mix of old and new files:
 
-1. `game.js`, near the end: `const VERSION = 'v9.3'; // PEEKEE_VERSION=v9.3` — both halves.
-2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.3 -->`
-3. `index.html`, the two `?v=9.3` query strings on the `style.css` and `game.js` links.
+1. `game.js`, near the end: `const VERSION = 'v9.9'; // PEEKEE_VERSION=v9.9` — both halves.
+2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.9 -->`
+3. `index.html`, the two `?v=9.9` query strings on the `style.css` and `game.js` links.
 
 Why the HTML comment matters: a few seconds after loading, the game re-fetches
 `index.html` with `cache: 'no-store'` and looks for the `PEEKEE_VERSION=` marker. If it
@@ -33,7 +33,7 @@ finds a version different from the one baked into `game.js`, it force-reloads on
 that's the automatic stale-cache rescue. The marker has to live in the HTML, because
 that's the only file the check can see.
 
-Current version: **v9.3**.
+Current version: **v9.9**.
 
 ## Testing recipe
 
@@ -52,10 +52,11 @@ Then serve the repo folder over plain HTTP and load it in headless Chromium with
 
 A release is good when all of this holds:
 
-- the title screen's footer reads `Peekee Kart v9.3` (or whatever the new version is)
+- the title screen's footer reads `Peekee Kart v9.9` (or whatever the new version is)
 - the browser console has **no errors** (SwiftShader "GPU stall due to ReadPixels"
   warnings are just software rendering — ignore them)
 - pressing Enter four times starts a race on Sunny Isle
+- every circuit can still be driven to the finish (the scratch folder's `drive-all.mjs`)
 - then `window.__auto = true; window.__advance(75)` and `window.__state()` reports
   `finished: true`
 
@@ -68,7 +69,7 @@ Built into `game.js`, harmless during normal play:
 
 - `window.__auto = true` — hands the player's kart to the AI, so a race can run unattended
 - `window.__advance(sec)` — simulates `sec` seconds of racing instantly, no rendering
-- `window.__state()` — returns `{ mode, lap, v, z, air, rank, idx, finished, jumps, hazards, gp }`
+- `window.__state()` — returns `{ mode, rain, lap, v, z, air, rank, idx, finished, jumps, hazards, gp }`
 
 ## What this game is trying to be
 
@@ -111,10 +112,17 @@ push, so any single one can be reverted without losing the others.
 4. **More circuits** — **four added in v9.7** (twelve total, three cups). Still open:
    the original eight are all still gentle sweepers, see below.
 5. ~~**Better character portraits**~~ — **shipped in v9.8.** Drawn in a 120-unit space and scaled to a 320px canvas, with a racer-tinted backing plate (without it the near-navy helmets vanished into the card).
-6. **Visual and graphics polish pass** — a further iteration on the whole look: more
-   detail, more modern, smoother. Same "Xbox not SNES" bar as everything else. Must
-   not cost so much performance that phones suffer; the Performance-mode setting is
-   the escape hatch.
+6. ~~**Visual and graphics polish pass**~~ — **shipped in v9.9.** Sharper, softer
+   shadows (3072 map, radius 2.2), noticeably smoother kart geometry, a corner
+   vignette, and a dithered sky to kill gradient banding.
+   **Tried and reverted: environment reflections.** Baking the procedural sky into
+   `scene.environment` is the textbook way to modernise this look, and it did give
+   the karts real reflections - but it floods every standard material with ambient
+   light and washed the colours out badly. Three attempts at rebalancing (cutting the
+   sky light, then `envMapIntensity` down to 0.32) still looked flatter than what we
+   already had, and it cost about 25% of the frame time. Backed out completely. If
+   it is worth retrying, do it per-material - reflections on the karts and glossy
+   props only, never on grass and road.
 
 **Deferred:** gamepad support. It was considered and consciously left out of this
 round; revisit later.
