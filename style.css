@@ -106,6 +106,13 @@
   .results .pt{opacity:.8;text-align:right;}
   .btn{pointer-events:auto;font-family:var(--hud);letter-spacing:.08em;font-size:clamp(16px,3vmin,30px);background:var(--sun);color:#3B1E00;border:0;border-radius:12px;padding:.4em 1.2em;box-shadow:0 5px 0 #B8321F;cursor:pointer;touch-action:manipulation;}
   .btn.alt{background:var(--mint);box-shadow:0 5px 0 #157A57;}
+  .btn.danger{background:var(--coral);color:#FFF6DC;box-shadow:0 5px 0 #8B1E22;}
+  .btn.locked{background:#3A3F63;color:rgba(255,246,220,.45);box-shadow:0 5px 0 #23263F;cursor:not-allowed;}
+  .btn.locked:active{transform:none;box-shadow:0 5px 0 #23263F;}
+  .unlockHint{font-weight:800;font-size:clamp(10px,1.5vmin,14px);letter-spacing:.08em;text-transform:uppercase;opacity:.6;min-height:1.2em;}
+  /* locked paints still hint at their colour, so you can see what you are working towards */
+  .swatch.locked{filter:grayscale(.7) brightness(.55);border-color:rgba(255,255,255,.08);cursor:not-allowed;box-shadow:none;}
+  .swatch.locked:after{content:"\1F512";display:block;text-align:center;line-height:1.6;font-size:1.9vmin;opacity:.85;}
   .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #B8321F;}
   .btn:focus-visible,.char:focus-visible,.trk:focus-visible{outline:3px solid var(--mint);outline-offset:3px;}
   .row{display:flex;gap:2vmin;flex-wrap:wrap;justify-content:center;}

@@ -414,6 +414,32 @@ function buildTrack(def) {
 // ═══════════════════════ audio: engine, effects and a synthesized soundtrack ═══════════════════════
 const OPT = { music: 0.7, sfx: 0.8, engine: 0.6, mirror: true, perf: false, stick: true }; try { Object.assign(OPT, JSON.parse(localStorage.getItem('pk_opt') || '{}')); } catch (e) {}
 function saveOpt() { try { localStorage.setItem('pk_opt', JSON.stringify(OPT)); } catch (e) {} }
+
+// ── progression ──────────────────────────────────────────────────────────────
+// Everything unlockable lives here. Paints open up as you finish races; the
+// Summit Cup opens when you finish an Island Cup on the podium.
+const PAINTS_FREE = 4;
+const SAVE = { races: 0, islandPodium: false };
+function saveProg() { try { localStorage.setItem('pk_progress', JSON.stringify(SAVE)); } catch (e) {} }
+const paintsUnlocked = () => Math.min(PAINTS.length, PAINTS_FREE + SAVE.races);
+const summitUnlocked = () => SAVE.islandPodium;
+try {
+  const raw = localStorage.getItem('pk_progress');
+  if (raw) Object.assign(SAVE, JSON.parse(raw));
+  else {
+    // Anyone who played before unlocks existed keeps what they already had:
+    // a saved lap on any circuit means the whole game was open to them.
+    let played = false; for (let i = 0; i < TRACKS.length; i++) if (localStorage.getItem('pk_best_' + i)) played = true;
+    if (played) { SAVE.races = PAINTS.length; SAVE.islandPodium = true; }
+    saveProg();
+  }
+} catch (e) {}
+function resetProgress() {
+  try { localStorage.removeItem('pk_progress'); for (let i = 0; i < TRACKS.length; i++) localStorage.removeItem('pk_best_' + i); } catch (e) {}
+  SAVE.races = 0; SAVE.islandPodium = false; saveProg();
+  if (PAINTS.indexOf(S.paint) >= paintsUnlocked()) S.paint = PAINTS[0];
+  refreshUnlocks(); renderBoard();
+}
 let AC = null, master = null, sfxBus = null, engA = null, engB = null, engGain = null, engFilter = null, skidNoise = null, skidGain = null, skidFilter = null, squeal = null, squealGain = null, musicOn = true, musicState = null;
 function audioInit() {
   if (AC) return; try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
@@ -786,7 +812,7 @@ function postFX() {
 }
 
 // ═══════════════════════ HUD & screens ═══════════════════════
-const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'board']) ui[id] = document.getElementById(id);
+const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
 const miniBase = document.createElement('canvas'); miniBase.width = 180; miniBase.height = 180;
 function drawOutline(c, size, xs, ys, lineW, col) { const k = size / WORLD; c.beginPath(); c.moveTo(xs[0] * k, ys[0] * k); for (let i = 1; i < xs.length; i++) c.lineTo(xs[i] * k, ys[i] * k); c.closePath(); c.lineCap = c.lineJoin = 'round'; c.lineWidth = lineW + 4; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.stroke(); c.lineWidth = lineW; c.strokeStyle = col; c.stroke(); }
 function drawMiniBase() { const c = miniBase.getContext('2d'); c.clearRect(0, 0, 180, 180); drawOutline(c, 180, TX, TY, 9, '#E8E4D8'); const d = tdir(0), k = 180 / WORLD; c.strokeStyle = '#FF5A5F'; c.lineWidth = 4; c.beginPath(); c.moveTo(TX[0] * k - d[1] * 7, TY[0] * k + d[0] * 7); c.lineTo(TX[0] * k + d[1] * 7, TY[0] * k - d[0] * 7); c.stroke(); }
@@ -825,11 +851,20 @@ function renderBoard() {
   ui.board.innerHTML = TRACKS.map((t, i) => { const b = bestFor(i), who = b && CHARS[b.ch] ? CHARS[b.ch].name : '';
     return `<div class="bcard${b ? '' : ' empty'}"><div class="bn">${t.name}</div><div class="bt">${b ? fmtTime(b.time) : '—'}</div><div class="bw">${who}</div></div>`; }).join('');
 }
-function showScreen(name) { for (const s of ['title', 'select', 'garage', 'trackSel', 'finish', 'pause', 'settings']) ui[s].hidden = s !== name; if (name && name !== 'pause' && name !== 'settings') { ui.hud.style.display = 'none'; S.mode = name; } if (name === 'garage') garageRefresh(); if (name === 'title') renderBoard(); }
+// keep every locked/unlocked bit of UI in step with SAVE
+function refreshUnlocks() {
+  const on = summitUnlocked();
+  ui.gp2Btn.classList.toggle('locked', !on);
+  ui.gp2Btn.textContent = on ? 'SUMMIT CUP (5–8)' : 'SUMMIT CUP · LOCKED';
+  ui.unlockHint.textContent = on ? '' : 'Finish on the podium in the Island Cup to unlock the Summit Cup';
+  if (ui.paints.children.length) [...ui.paints.children].forEach((el, i) => el.classList.toggle('locked', i >= paintsUnlocked()));
+  ui.progInfo.textContent = `Races finished ${SAVE.races} · Paints ${paintsUnlocked()} of ${PAINTS.length} · Summit Cup ${on ? 'unlocked' : 'locked'}`;
+}
+function showScreen(name) { for (const s of ['title', 'select', 'garage', 'trackSel', 'finish', 'pause', 'settings']) ui[s].hidden = s !== name; if (name && name !== 'pause' && name !== 'settings') { ui.hud.style.display = 'none'; S.mode = name; } if (name === 'garage') garageRefresh(); if (name === 'title') renderBoard(); if (name === 'trackSel') refreshUnlocks(); }
 // ── pause & settings ──
 function pauseGame() { if (S.mode !== 'race' && S.mode !== 'countdown') return; S.prevMode = S.mode; S.mode = 'pause'; ui.pause.hidden = false; SFX.pause(); if (musicState) musicState.gain.gain.setTargetAtTime(0.08 * OPT.music, AC.currentTime, 0.2); }
 function resumeGame() { if (S.mode !== 'pause') return; S.mode = S.prevMode; ui.pause.hidden = true; ui.settings.hidden = true; last = performance.now(); if (musicState) musicState.gain.gain.setTargetAtTime(musicOn ? 0.42 * OPT.music : 0, AC.currentTime, 0.3); }
-function openSettings(from) { S.settingsFrom = from; ui.optMusic.value = OPT.music; ui.optSfx.value = OPT.sfx; ui.optEngine.value = OPT.engine; ui.optMirror.checked = OPT.mirror; ui.optPerf.checked = OPT.perf; ui.settings.hidden = false; if (from === 'title') { ui.title.hidden = true; S.mode = 'settings'; } else ui.pause.hidden = true; }
+function openSettings(from) { refreshUnlocks(); S.settingsFrom = from; ui.optMusic.value = OPT.music; ui.optSfx.value = OPT.sfx; ui.optEngine.value = OPT.engine; ui.optMirror.checked = OPT.mirror; ui.optPerf.checked = OPT.perf; ui.settings.hidden = false; if (from === 'title') { ui.title.hidden = true; S.mode = 'settings'; } else ui.pause.hidden = true; }
 function closeSettings() { ui.settings.hidden = true; if (S.settingsFrom === 'title') { S.mode = 'title'; ui.title.hidden = false; } else ui.pause.hidden = false; }
 function applyOpt() {
   saveOpt(); if (musicState && AC) musicState.gain.gain.setTargetAtTime(musicOn ? 0.42 * OPT.music : 0, AC.currentTime, 0.2); if (sfxBus) sfxBus.gain.value = OPT.sfx;
@@ -848,13 +883,13 @@ let gKart = null, gAngle = 0;
 function garageRefresh() {
   if (gKart) gScene.remove(gKart);
   gKart = buildKart(CHARS[S.sel], KART_MODELS[S.model], S.paint); gKart.matrixAutoUpdate = true; gKart.position.set(14, 0, 0); gScene.add(gKart);
-  [...ui.models.children].forEach((el, i) => el.classList.toggle('sel', i === S.model)); [...ui.paints.children].forEach((el, i) => el.classList.toggle('sel', PAINTS[i] === S.paint));
+  [...ui.models.children].forEach((el, i) => el.classList.toggle('sel', i === S.model)); [...ui.paints.children].forEach((el, i) => { el.classList.toggle('sel', PAINTS[i] === S.paint); el.classList.toggle('locked', i >= paintsUnlocked()); });
   const ch = CHARS[S.sel], md = KART_MODELS[S.model], bar = v => `<div class="bar"><i style="width:${Math.round(Math.max(8, Math.min(100, (v - 0.75) / 0.45 * 100)))}%"></i></div>`;
   ui.gstats.innerHTML = `<div>${ch.name} · ${md.name}</div><div></div><div>Speed</div>${bar(ch.speed * md.speed)}<div>Accel</div>${bar(ch.accel * md.accel)}<div>Handling</div>${bar(ch.handling * md.handling)}`;
 }
 function buildGarageUI() {
   ui.models.innerHTML = ''; KART_MODELS.forEach((m, i) => { const el = document.createElement('div'); el.className = 'mcard'; el.innerHTML = `<div class="nm">${m.name}</div><div class="st">${m.sub}</div>`; el.addEventListener('click', () => { S.model = i; garageRefresh(); }); ui.models.appendChild(el); });
-  ui.paints.innerHTML = ''; PAINTS.forEach(p => { const el = document.createElement('div'); el.className = 'swatch'; el.style.background = p; el.addEventListener('click', () => { S.paint = p; garageRefresh(); }); ui.paints.appendChild(el); });
+  ui.paints.innerHTML = ''; PAINTS.forEach((p, i) => { const el = document.createElement('div'); el.className = 'swatch'; el.style.background = p; el.addEventListener('click', () => { if (i >= paintsUnlocked()) return; S.paint = p; garageRefresh(); }); ui.paints.appendChild(el); });
 }
 function renderGarage(dt) { gAngle += dt * 0.6; if (gKart) gKart.rotation.z = gAngle; renderer.render(gScene, gCam); fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height); }
 function buildRoster() {
@@ -882,10 +917,20 @@ function showResults() {
   if (S.gp && last) { const standings = CHARS.map((ch, i) => ({ ch, pts: S.gp.points[i] })).sort((a, b) => b.pts - a.pts); const me = standings.findIndex(s => s.ch === player.ch) + 1; rows = standings.map((s, i) => `<div class="r">${ORD(i + 1)}</div><div class="${s.ch === player.ch ? 'you' : ''}">${s.ch.name} the ${s.ch.kind}${s.ch === player.ch ? ' (you)' : ''}</div><div></div><div class="pt">${s.pts} pts</div>`).join(''); ui.finishTag.textContent = S.gp.name + ' · final standings'; ui.finishTitle.textContent = me === 1 ? 'CHAMPION!' : me <= 3 ? 'PODIUM!' : 'GP OVER'; ui.againBtn.textContent = 'BACK TO MENU'; }
   else { rows = order.map(k => `<div class="r">${ORD(k.rank)}</div><div class="${k === player ? 'you' : ''}">${k.ch.name} the ${k.ch.kind}${k === player ? ' (you)' : ''}</div><div>${k.finished ? fmtTime(k.finishTime) : '—'}</div><div class="pt">${S.gp ? S.gp.points[CHARS.indexOf(k.ch)] + ' pts' : ''}</div>`).join(''); ui.finishTag.textContent = S.gp ? `${S.gp.name} · race ${S.gp.race + 1} of ${S.gp.list.length} · ${T.name}` : T.name; ui.finishTitle.textContent = player.rank === 1 ? 'YOU WIN!' : player.rank <= 3 ? 'PODIUM!' : 'FINISH!'; ui.againBtn.textContent = S.gp ? 'NEXT RACE' : 'RACE AGAIN'; }
   if (player.laps.length) rows += `<div class="r"></div><div class="you" style="grid-column:2/5;opacity:.85">Your laps: ${player.laps.map(fmtTime).join(' · ')} · best ${fmtTime(Math.min(...player.laps))}${S.best ? ' · record ' + fmtTime(S.best.time) : ''}</div>`;
+  // progression: every finished race earns a paint, an Island Cup podium opens the Summit Cup
+  const paintsBefore = paintsUnlocked(); SAVE.races++;
+  const gained = [];
+  if (paintsUnlocked() > paintsBefore) gained.push('New paint unlocked in the garage');
+  if (S.gp && S.gp.cup === 0 && last && !SAVE.islandPodium) {
+    const table = CHARS.map((ch, i) => ({ ch, pts: S.gp.points[i] })).sort((a, b) => b.pts - a.pts);
+    if (table.findIndex(s => s.ch === player.ch) + 1 <= 3) { SAVE.islandPodium = true; gained.push('SUMMIT CUP UNLOCKED'); }
+  }
+  saveProg(); refreshUnlocks();
+  if (gained.length) rows += `<div class="r">★</div><div class="you" style="grid-column:2/5">${gained.join(' · ')}</div>`;
   ui.results.innerHTML = rows; ui.finish.hidden = false; ui.againBtn.focus();
 }
 function afterFinish() { if (S.gp && S.gp.race < S.gp.list.length - 1) { S.gp.race++; S.trk = S.gp.list[S.gp.race]; startRace(); return; } S.gp = null; showScreen('trackSel'); }
-function startGP(cup) { const list = TRACKS.map((_, i) => i).filter(i => Math.floor(i / 4) === cup); S.gp = { name: cup ? 'Summit Cup' : 'Island Cup', list, race: 0, points: CHARS.map(() => 0) }; S.trk = list[0]; startRace(); }
+function startGP(cup) { const list = TRACKS.map((_, i) => i).filter(i => Math.floor(i / 4) === cup); S.gp = { name: cup ? 'Summit Cup' : 'Island Cup', cup, list, race: 0, points: CHARS.map(() => 0) }; S.trk = list[0]; startRace(); }
 
 // ═══════════════════════ input ═══════════════════════
 const unlockAudio = () => { audioInit(); if (AC && AC.state === 'suspended') AC.resume(); };
@@ -898,7 +943,7 @@ addEventListener('keydown', e => {
   if (S.mode === 'title' && e.code === 'KeyS') { openSettings('title'); return; }
   if (S.mode === 'select') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') { S.sel = (S.sel + 5) % 6; S.paint = CHARS[S.sel].body; } if (e.code === 'ArrowRight' || e.code === 'KeyD') { S.sel = (S.sel + 1) % 6; S.paint = CHARS[S.sel].body; } refreshRoster(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); showScreen('garage'); } return; }
   if (S.mode === 'garage') { const n = KART_MODELS.length, pi = Math.max(0, PAINTS.indexOf(S.paint)); if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.model = (S.model + n - 1) % n; if (e.code === 'ArrowRight' || e.code === 'KeyD') S.model = (S.model + 1) % n; if (e.code === 'ArrowUp' || e.code === 'KeyW') S.paint = PAINTS[(pi + PAINTS.length - 1) % PAINTS.length]; if (e.code === 'ArrowDown' || e.code === 'KeyS') S.paint = PAINTS[(pi + 1) % PAINTS.length]; garageRefresh(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); showScreen('trackSel'); } if (e.code === 'Escape') showScreen('select'); return; }
-  if (S.mode === 'trackSel') { const n = TRACKS.length; if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.trk = (S.trk + n - 1) % n; if (e.code === 'ArrowRight' || e.code === 'KeyD') S.trk = (S.trk + 1) % n; if (e.code === 'ArrowUp' || e.code === 'ArrowDown') S.trk = (S.trk + 4) % n; refreshTracks(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); S.gp = null; startRace(); } if (e.code === 'KeyG') startGP(Math.floor(S.trk / 4)); if (e.code === 'KeyD') { S.diff = (S.diff + 1) % 3; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); } if (e.code === 'Escape') showScreen('garage'); return; }
+  if (S.mode === 'trackSel') { const n = TRACKS.length; if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.trk = (S.trk + n - 1) % n; if (e.code === 'ArrowRight' || e.code === 'KeyD') S.trk = (S.trk + 1) % n; if (e.code === 'ArrowUp' || e.code === 'ArrowDown') S.trk = (S.trk + 4) % n; refreshTracks(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); S.gp = null; startRace(); } if (e.code === 'KeyG') { const cup = Math.floor(S.trk / 4); if (cup === 0 || summitUnlocked()) startGP(cup); } if (e.code === 'KeyD') { S.diff = (S.diff + 1) % 3; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); } if (e.code === 'Escape') showScreen('garage'); return; }
   if (S.mode === 'finish') { if (e.code === 'Enter') { e.preventDefault(); afterFinish(); } return; }
   if (e.code === 'Enter' || e.code === 'KeyE' || e.code === 'ControlLeft' || e.code === 'ControlRight') keys._useItem = true;
   if (S.mode === 'pause') { if (e.code === 'Escape' || e.code === 'KeyP') resumeGame(); return; }
@@ -908,11 +953,18 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 ui.title.addEventListener('click', () => { unlockAudio(); if (S.mode === 'title') showScreen('select'); });
-ui.charOk.addEventListener('click', () => showScreen('garage')); ui.garageOk.addEventListener('click', () => showScreen('trackSel')); ui.garageBack.addEventListener('click', () => showScreen('select')); ui.raceBtn.addEventListener('click', () => { S.gp = null; startRace(); }); ui.gpBtn.addEventListener('click', () => startGP(0)); ui.gp2Btn.addEventListener('click', () => startGP(1)); ui.againBtn.addEventListener('click', afterFinish);
+ui.charOk.addEventListener('click', () => showScreen('garage')); ui.garageOk.addEventListener('click', () => showScreen('trackSel')); ui.garageBack.addEventListener('click', () => showScreen('select')); ui.raceBtn.addEventListener('click', () => { S.gp = null; startRace(); }); ui.gpBtn.addEventListener('click', () => startGP(0)); ui.gp2Btn.addEventListener('click', () => { if (summitUnlocked()) startGP(1); }); ui.againBtn.addEventListener('click', afterFinish);
 ui.pauseBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (S.mode === 'pause') resumeGame(); else pauseGame(); });
 ui.resumeBtn.addEventListener('click', resumeGame); ui.restartBtn.addEventListener('click', () => { ui.pause.hidden = true; S.mode = S.prevMode; startRace(); }); ui.quitBtn.addEventListener('click', () => { ui.pause.hidden = true; S.gp = null; musicStop(); showScreen('trackSel'); });
 ui.pauseSettings.addEventListener('click', () => openSettings('pause')); ui.titleSettings.addEventListener('click', e => { e.stopPropagation(); openSettings('title'); }); ui.settingsBack.addEventListener('click', closeSettings);
 for (const [id, key] of [['optMusic', 'music'], ['optSfx', 'sfx'], ['optEngine', 'engine']]) ui[id].addEventListener('input', () => { OPT[key] = +ui[id].value; applyOpt(); });
+// wiping records and unlocks is destructive, so it takes two taps
+let resetArmed = 0;
+ui.resetProg.addEventListener('click', () => {
+  if (resetArmed && Date.now() < resetArmed) { resetArmed = 0; resetProgress(); ui.resetProg.textContent = 'PROGRESS RESET'; setTimeout(() => { ui.resetProg.textContent = 'RESET PROGRESS'; }, 1800); return; }
+  resetArmed = Date.now() + 5000; ui.resetProg.textContent = 'TAP AGAIN TO CONFIRM';
+  setTimeout(() => { if (resetArmed) { resetArmed = 0; ui.resetProg.textContent = 'RESET PROGRESS'; } }, 5000);
+});
 ui.optMirror.addEventListener('change', () => { OPT.mirror = ui.optMirror.checked; applyOpt(); }); ui.optPerf.addEventListener('change', () => { OPT.perf = ui.optPerf.checked; applyOpt(); });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; touch.steer = 0; touch.drift = false; });
 const isTouchDevice = matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
@@ -966,8 +1018,8 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.4'; // PEEKEE_VERSION=v9.4
-renderBoard();
+const VERSION = 'v9.5'; // PEEKEE_VERSION=v9.5
+renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
 // hidden test hooks (used by automated checks; harmless in play)
