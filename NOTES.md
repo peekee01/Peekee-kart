@@ -85,15 +85,38 @@ Built into `game.js`, harmless during normal play:
   reachable and never scroll away.
 - **Out of scope:** no two-player mode, no time-trial mode.
 
-## Roadmap (in priority order)
+## Roadmap — agreed plan, in build order
 
-1. **Progression and unlocks** — Summit Cup unlocked by a podium finish in the Island
-   Cup; extra paint colours unlocked by playing.
-2. **Gamepad support** — standard controller mapping.
-3. **Weather** — rain, and how it affects grip and look.
-4. **More circuits** — beyond the current eight.
+Work these in order. Each one is its own commit, its own version bump, and its own
+push, so any single one can be reverted without losing the others.
+
+1. **Per-track leaderboard on the title screen** — best times per circuit.
+   Cheapest win: the data already exists. `pk_best_<track>` in localStorage holds
+   `{ time, rec, ch, model, paint }` per circuit and already drives the ghost kart.
+   Today that best time is only visible in the small `#lapTimes` HUD corner during a
+   race. This is mostly a layout job — no new game logic.
+2. **Progression and unlocks** — Summit Cup unlocked by an Island Cup podium; extra
+   paints unlocked by playing. Cup standings and points already work (`startGP`,
+   `GP_POINTS`, `S.gp.points`); follow the existing save pattern with a `pk_progress`
+   key. Unlock generously for players who already have progress — never take away
+   access someone already had. Add a **reset progress** button to Settings at the same
+   time, so a clean slate is testable.
+3. **Weather** — rain, and how it affects grip and look. The riskiest item: grip
+   changes touch the handling model, which is the part most likely to wreck the
+   driving feel. Test heavily by actually driving.
+4. **More circuits, and more variety in the existing ones** — beyond the current eight.
+   The owner specifically wants circuits that differ as *race tracks*, not just as
+   scenery: genuinely different corner types and rhythms — hairpins, long sweepers,
+   chicanes, esses, tightening corners, varied straight lengths — rather than eight
+   sets of similar bends in different colours.
 5. **Better character portraits** — the roster art on the character-select screen.
-6. **Per-track leaderboard on the title screen** — best times per circuit.
+6. **Visual and graphics polish pass** — a further iteration on the whole look: more
+   detail, more modern, smoother. Same "Xbox not SNES" bar as everything else. Must
+   not cost so much performance that phones suffer; the Performance-mode setting is
+   the escape hatch.
+
+**Deferred:** gamepad support. It was considered and consciously left out of this
+round; revisit later.
 
 ## Working style
 
