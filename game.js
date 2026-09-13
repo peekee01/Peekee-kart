@@ -56,6 +56,28 @@ const TRACKS = [
     skyTop: [0x08, 0x06, 0x18], skyBot: [0x28, 0x1E, 0x50], hills: ['#1A1430', '#241C40'], fog: '30,22,60', sun: '#B0E0FF', sunI: 0.45, hemi: ['#6A50C0', '#100C20'], hillAmp: 120, night: true,
     scenery: ['crystal', 'crystal', 'rock', 'crystal', 'lantern', 'rock'], arch: '#8FD3FF', music: { bpm: 100, root: 11, mode: 'minor' },
     patches: c => { c.fillStyle = '#1E4A6A'; for (const [x, y, r] of [[1600, 1500, 170], [400, 1900, 120]]) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0.4, 0, 7); c.fill(); } } },
+  { name: 'Salt Flats', shortcut: [11, 15], sub: 'Salt pan · flat out', rainChance: 0.05, ctrl: [[800,320,0],[1350,285,0],[1600,375,0],[1850,290,0],[2050,350,0],[2180,620,0],[2240,1000,0],[2210,1450,0],[2080,1820,0],[1800,2080,0],[1350,2220,0],[900,2230,0],[640,2200,0],[470,2110,0],[395,1965,0],[400,1820,0],[330,1500,0],[255,1050,0],[300,650,0],[450,420,0]],
+    ground: '#EDE9DE', mottle: ['#E1DACA', '#F7F4EC'], dots: ['#FFFFFF', '#D6CBB2'], road: '#7E7A70', road2: '#8A8578', curb: ['#FFFFFF', '#D8442A'], dash: '#E8E2D2',
+    skyTop: [0x2C, 0x76, 0xD6], skyBot: [0xE6, 0xF3, 0xFF], hills: ['#C4B69C', '#A2917A'], fog: '236,234,222', sun: '#FFFDF0', sunI: 1.85, hemi: ['#E8F4FF', '#C6BCA6'], hillAmp: 55,
+    scenery: ['mesa', 'rock', 'flag', 'stand', 'rock', 'mesa'], arch: '#D8442A', music: { bpm: 114, root: 7, mode: 'major' },
+    patches: c => { c.strokeStyle = '#D5CCB6'; c.lineWidth = 3; for (let i = 0; i < 260; i++) { const x = Math.random() * WORLD, y = Math.random() * WORLD; c.beginPath(); c.moveTo(x, y); let px = x, py = y; for (let j = 0; j < 3; j++) { px += (Math.random() - 0.5) * 90; py += (Math.random() - 0.5) * 90; c.lineTo(px, py); } c.stroke(); }
+      c.fillStyle = '#BCD8E8'; c.beginPath(); c.ellipse(1450, 1150, 210, 130, 0.3, 0, 7); c.fill(); c.fillStyle = '#D8EAF2'; c.beginPath(); c.ellipse(1450, 1150, 150, 85, 0.3, 0, 7); c.fill(); } },
+  { name: 'Old Town', shortcut: [8, 12], sub: 'Cobbles · hairpins', rainChance: 0.3, ctrl: [[400,300,0],[1000,270,5],[1500,280,10],[1750,300,14],[1880,420,16],[1850,570,16],[1600,650,14],[1300,660,12],[1150,760,10],[1140,920,10],[1400,1010,12],[1700,1030,14],[1880,1100,16],[1900,1250,16],[1720,1310,14],[1450,1300,12],[1150,1330,10],[980,1450,8],[980,1650,6],[1250,1780,4],[1700,1820,4],[1950,1900,2],[2050,2060,0],[1750,2200,0],[1200,2230,0],[700,2150,0],[400,1980,0],[270,1700,0],[250,1350,0],[270,1000,0],[300,650,0]],
+    ground: '#A89880', mottle: ['#9A8B74', '#B6A68C'], dots: ['#D8C8A8', '#8B6F4E', '#C86A4A'], road: '#6E6660', road2: '#79706A', curb: ['#F0E8D8', '#8B3A2A'], dash: '#C8BCA8',
+    skyTop: [0x4A, 0x86, 0xC8], skyBot: [0xFF, 0xE8, 0xC8], hills: ['#9A8A70', '#7A6A54'], fog: '240,226,200', sun: '#FFF0C8', sunI: 1.35, hemi: ['#FFE8C8', '#7A6A54'], hillAmp: 70,
+    scenery: ['lamp', 'stand', 'lantern', 'flag', 'lamp', 'bush'], arch: '#8B3A2A', music: { bpm: 98, root: 2, mode: 'minor' },
+    patches: c => { c.fillStyle = '#C4B094'; for (const [x, y, w, h] of [[520, 1450, 360, 250], [1780, 640, 280, 190], [1080, 300, 240, 160], [1500, 1900, 300, 220]]) c.fillRect(x, y, w, h);
+      c.fillStyle = '#94856E'; for (let i = 0; i < 500; i++) c.fillRect(Math.random() * WORLD, Math.random() * WORLD, 15, 9); } },
+  { name: 'Thunder Bay', shortcut: [10, 14], sub: 'Storm coast · esses', rainChance: 0.85, ctrl: [[350,400,0],[700,300,6],[950,480,10],[1250,320,14],[1550,500,18],[1850,340,22],[2120,560,18],[2050,900,12],[1750,1000,8],[1500,830,12],[1200,950,16],[950,1180,12],[1150,1450,8],[1450,1350,12],[1750,1500,16],[2050,1400,12],[2180,1750,6],[1900,2050,0],[1550,1950,6],[1250,2100,10],[900,2000,6],[600,2150,0],[330,1900,0],[250,1500,0],[300,1050,0],[250,700,0]],
+    ground: '#4A5A52', mottle: ['#3E4E46', '#56665C'], dots: ['#8FA8A0', '#C8D8D0'], road: '#3E4650', road2: '#48505A', curb: ['#E8EEF0', '#2A4E6A'], dash: '#A8B8C0',
+    skyTop: [0x24, 0x30, 0x44], skyBot: [0x8A, 0x9C, 0xAE], hills: ['#46545E', '#33404A'], fog: '150,166,178', sun: '#C8D8E8', sunI: 0.7, hemi: ['#9CB0C4', '#3A4A44'], hillAmp: 130,
+    scenery: ['pine', 'rock', 'pine', 'lamp', 'flag', 'rock'], arch: '#2A4E6A', music: { bpm: 92, root: 9, mode: 'minor' },
+    patches: c => { c.fillStyle = '#22384C'; c.fillRect(0, 0, 190, WORLD); c.fillStyle = '#2E4A62'; c.fillRect(0, 0, 120, WORLD); c.fillStyle = '#7A8A88'; for (const [x, y, r] of [[720, 1720, 150], [1980, 780, 120], [1350, 1200, 100]]) { c.beginPath(); c.ellipse(x, y, r, r * 0.6, 0.35, 0, 7); c.fill(); } } },
+  { name: 'Emerald Terraces', shortcut: [7, 11], sub: 'Terraces · climbs', rainChance: 0.35, ctrl: [[400,520,0],[820,340,25],[1300,300,55],[1780,430,90],[2080,720,125],[2180,1120,150],[1900,1420,130],[1560,1320,105],[1300,1520,80],[1480,1820,55],[1830,1960,40],[2080,1880,28],[2200,2000,16],[2100,2200,6],[1700,2270,0],[1150,2210,10],[750,2060,20],[480,1780,30],[590,1420,26],[860,1170,16],[690,870,6],[330,810,0]],
+    ground: '#4E8C48', mottle: ['#427C3E', '#5CA054'], dots: ['#A8D88F', '#FFD23F', '#FFFFFF'], road: '#6A6250', road2: '#746B58', curb: ['#EDE4C8', '#2E6A4A'], dash: '#BCB090',
+    skyTop: [0x54, 0x94, 0xCE], skyBot: [0xDC, 0xF0, 0xE4], hills: ['#5E9A62', '#3E7248'], fog: '196,222,204', sun: '#FFF6D0', sunI: 1.4, hemi: ['#D6EEDC', '#2E5A38'], hillAmp: 190,
+    scenery: ['bigtree', 'lantern', 'bush', 'cherry', 'bigtree', 'rock'], arch: '#2E6A4A', music: { bpm: 100, root: 4, mode: 'major' },
+    patches: c => { for (let i = 0; i < 9; i++) { c.globalAlpha = 0.45; c.fillStyle = '#79B2CE'; c.beginPath(); c.ellipse(360 + (i * 271) % 1900, 520 + (i * 437) % 1600, 180, 72, 0.4 + i * 0.3, 0, 7); c.fill(); } c.globalAlpha = 1; } },
 ];
 // kart models (multiplied with the driver's stats) and paint options
 const KART_MODELS = [
@@ -456,10 +478,11 @@ function saveOpt() { try { localStorage.setItem('pk_opt', JSON.stringify(OPT)); 
 // Everything unlockable lives here. Paints open up as you finish races; the
 // Summit Cup opens when you finish an Island Cup on the podium.
 const PAINTS_FREE = 4;
-const SAVE = { races: 0, islandPodium: false };
+const CUPS = ['Island Cup', 'Summit Cup', 'Frontier Cup'];
+const SAVE = { races: 0, islandPodium: false, summitPodium: false };
 function saveProg() { try { localStorage.setItem('pk_progress', JSON.stringify(SAVE)); } catch (e) {} }
 const paintsUnlocked = () => Math.min(PAINTS.length, PAINTS_FREE + SAVE.races);
-const summitUnlocked = () => SAVE.islandPodium;
+const cupUnlocked = cup => cup === 0 || (cup === 1 ? SAVE.islandPodium : SAVE.summitPodium);
 try {
   const raw = localStorage.getItem('pk_progress');
   if (raw) Object.assign(SAVE, JSON.parse(raw));
@@ -467,13 +490,13 @@ try {
     // Anyone who played before unlocks existed keeps what they already had:
     // a saved lap on any circuit means the whole game was open to them.
     let played = false; for (let i = 0; i < TRACKS.length; i++) if (localStorage.getItem('pk_best_' + i)) played = true;
-    if (played) { SAVE.races = PAINTS.length; SAVE.islandPodium = true; }
+    if (played) { SAVE.races = PAINTS.length; SAVE.islandPodium = true; SAVE.summitPodium = true; }
     saveProg();
   }
 } catch (e) {}
 function resetProgress() {
   try { localStorage.removeItem('pk_progress'); for (let i = 0; i < TRACKS.length; i++) localStorage.removeItem('pk_best_' + i); } catch (e) {}
-  SAVE.races = 0; SAVE.islandPodium = false; saveProg();
+  SAVE.races = 0; SAVE.islandPodium = false; SAVE.summitPodium = false; saveProg();
   if (PAINTS.indexOf(S.paint) >= paintsUnlocked()) S.paint = PAINTS[0];
   refreshUnlocks(); renderBoard();
 }
@@ -850,7 +873,7 @@ function postFX() {
 }
 
 // ═══════════════════════ HUD & screens ═══════════════════════
-const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'optWeather', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
+const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'optWeather', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'gp3Btn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
 const miniBase = document.createElement('canvas'); miniBase.width = 180; miniBase.height = 180;
 function drawOutline(c, size, xs, ys, lineW, col) { const k = size / WORLD; c.beginPath(); c.moveTo(xs[0] * k, ys[0] * k); for (let i = 1; i < xs.length; i++) c.lineTo(xs[i] * k, ys[i] * k); c.closePath(); c.lineCap = c.lineJoin = 'round'; c.lineWidth = lineW + 4; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.stroke(); c.lineWidth = lineW; c.strokeStyle = col; c.stroke(); }
 function drawMiniBase() { const c = miniBase.getContext('2d'); c.clearRect(0, 0, 180, 180); drawOutline(c, 180, TX, TY, 9, '#E8E4D8'); const d = tdir(0), k = 180 / WORLD; c.strokeStyle = '#FF5A5F'; c.lineWidth = 4; c.beginPath(); c.moveTo(TX[0] * k - d[1] * 7, TY[0] * k + d[0] * 7); c.lineTo(TX[0] * k + d[1] * 7, TY[0] * k - d[0] * 7); c.stroke(); }
@@ -891,12 +914,15 @@ function renderBoard() {
 }
 // keep every locked/unlocked bit of UI in step with SAVE
 function refreshUnlocks() {
-  const on = summitUnlocked();
-  ui.gp2Btn.classList.toggle('locked', !on);
-  ui.gp2Btn.textContent = on ? 'SUMMIT CUP (5–8)' : 'SUMMIT CUP · LOCKED';
-  ui.unlockHint.textContent = on ? '' : 'Finish on the podium in the Island Cup to unlock the Summit Cup';
+  for (const [cup, btn, label] of [[1, ui.gp2Btn, 'SUMMIT CUP (5–8)'], [2, ui.gp3Btn, 'FRONTIER CUP (9–12)']]) {
+    const on = cupUnlocked(cup);
+    btn.classList.toggle('locked', !on);
+    btn.textContent = on ? label : label.replace(/ \(.*\)/, '') + ' · LOCKED';
+  }
+  ui.unlockHint.textContent = !cupUnlocked(1) ? 'Finish on the podium in the Island Cup to unlock the Summit Cup'
+    : !cupUnlocked(2) ? 'Finish on the podium in the Summit Cup to unlock the Frontier Cup' : '';
   if (ui.paints.children.length) [...ui.paints.children].forEach((el, i) => el.classList.toggle('locked', i >= paintsUnlocked()));
-  ui.progInfo.textContent = `Races finished ${SAVE.races} · Paints ${paintsUnlocked()} of ${PAINTS.length} · Summit Cup ${on ? 'unlocked' : 'locked'}`;
+  ui.progInfo.textContent = `Races finished ${SAVE.races} · Paints ${paintsUnlocked()} of ${PAINTS.length} · Cups open ${[0, 1, 2].filter(cupUnlocked).length} of 3`;
 }
 function showScreen(name) { for (const s of ['title', 'select', 'garage', 'trackSel', 'finish', 'pause', 'settings']) ui[s].hidden = s !== name; if (name && name !== 'pause' && name !== 'settings') { ui.hud.style.display = 'none'; S.mode = name; } if (name === 'garage') garageRefresh(); if (name === 'title') renderBoard(); if (name === 'trackSel') refreshUnlocks(); }
 // ── pause & settings ──
@@ -959,16 +985,19 @@ function showResults() {
   const paintsBefore = paintsUnlocked(); SAVE.races++;
   const gained = [];
   if (paintsUnlocked() > paintsBefore) gained.push('New paint unlocked in the garage');
-  if (S.gp && S.gp.cup === 0 && last && !SAVE.islandPodium) {
-    const table = CHARS.map((ch, i) => ({ ch, pts: S.gp.points[i] })).sort((a, b) => b.pts - a.pts);
-    if (table.findIndex(s => s.ch === player.ch) + 1 <= 3) { SAVE.islandPodium = true; gained.push('SUMMIT CUP UNLOCKED'); }
+  if (S.gp && last && S.gp.cup < 2) {
+    const key = S.gp.cup === 0 ? 'islandPodium' : 'summitPodium';
+    if (!SAVE[key]) {
+      const table = CHARS.map((ch, i) => ({ ch, pts: S.gp.points[i] })).sort((a, b) => b.pts - a.pts);
+      if (table.findIndex(s => s.ch === player.ch) + 1 <= 3) { SAVE[key] = true; gained.push(CUPS[S.gp.cup + 1].toUpperCase() + ' UNLOCKED'); }
+    }
   }
   saveProg(); refreshUnlocks();
   if (gained.length) rows += `<div class="r">★</div><div class="you" style="grid-column:2/5">${gained.join(' · ')}</div>`;
   ui.results.innerHTML = rows; ui.finish.hidden = false; ui.againBtn.focus();
 }
 function afterFinish() { if (S.gp && S.gp.race < S.gp.list.length - 1) { S.gp.race++; S.trk = S.gp.list[S.gp.race]; startRace(); return; } S.gp = null; showScreen('trackSel'); }
-function startGP(cup) { const list = TRACKS.map((_, i) => i).filter(i => Math.floor(i / 4) === cup); S.gp = { name: cup ? 'Summit Cup' : 'Island Cup', cup, list, race: 0, points: CHARS.map(() => 0) }; S.trk = list[0]; startRace(); }
+function startGP(cup) { const list = TRACKS.map((_, i) => i).filter(i => Math.floor(i / 4) === cup); S.gp = { name: CUPS[cup], cup, list, race: 0, points: CHARS.map(() => 0) }; S.trk = list[0]; startRace(); }
 
 // ═══════════════════════ input ═══════════════════════
 const unlockAudio = () => { audioInit(); if (AC && AC.state === 'suspended') AC.resume(); };
@@ -981,7 +1010,7 @@ addEventListener('keydown', e => {
   if (S.mode === 'title' && e.code === 'KeyS') { openSettings('title'); return; }
   if (S.mode === 'select') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') { S.sel = (S.sel + 5) % 6; S.paint = CHARS[S.sel].body; } if (e.code === 'ArrowRight' || e.code === 'KeyD') { S.sel = (S.sel + 1) % 6; S.paint = CHARS[S.sel].body; } refreshRoster(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); showScreen('garage'); } return; }
   if (S.mode === 'garage') { const n = KART_MODELS.length, pi = Math.max(0, PAINTS.indexOf(S.paint)); if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.model = (S.model + n - 1) % n; if (e.code === 'ArrowRight' || e.code === 'KeyD') S.model = (S.model + 1) % n; if (e.code === 'ArrowUp' || e.code === 'KeyW') S.paint = PAINTS[(pi + PAINTS.length - 1) % PAINTS.length]; if (e.code === 'ArrowDown' || e.code === 'KeyS') S.paint = PAINTS[(pi + 1) % PAINTS.length]; garageRefresh(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); showScreen('trackSel'); } if (e.code === 'Escape') showScreen('select'); return; }
-  if (S.mode === 'trackSel') { const n = TRACKS.length; if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.trk = (S.trk + n - 1) % n; if (e.code === 'ArrowRight' || e.code === 'KeyD') S.trk = (S.trk + 1) % n; if (e.code === 'ArrowUp' || e.code === 'ArrowDown') S.trk = (S.trk + 4) % n; refreshTracks(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); S.gp = null; startRace(); } if (e.code === 'KeyG') { const cup = Math.floor(S.trk / 4); if (cup === 0 || summitUnlocked()) startGP(cup); } if (e.code === 'KeyD') { S.diff = (S.diff + 1) % 3; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); } if (e.code === 'Escape') showScreen('garage'); return; }
+  if (S.mode === 'trackSel') { const n = TRACKS.length; if (e.code === 'ArrowLeft' || e.code === 'KeyA') S.trk = (S.trk + n - 1) % n; if (e.code === 'ArrowRight' || e.code === 'KeyD') S.trk = (S.trk + 1) % n; if (e.code === 'ArrowUp' || e.code === 'ArrowDown') S.trk = (S.trk + 4) % n; refreshTracks(); if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); S.gp = null; startRace(); } if (e.code === 'KeyG') { const cup = Math.floor(S.trk / 4); if (cupUnlocked(cup)) startGP(cup); } if (e.code === 'KeyD') { S.diff = (S.diff + 1) % 3; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); } if (e.code === 'Escape') showScreen('garage'); return; }
   if (S.mode === 'finish') { if (e.code === 'Enter') { e.preventDefault(); afterFinish(); } return; }
   if (e.code === 'Enter' || e.code === 'KeyE' || e.code === 'ControlLeft' || e.code === 'ControlRight') keys._useItem = true;
   if (S.mode === 'pause') { if (e.code === 'Escape' || e.code === 'KeyP') resumeGame(); return; }
@@ -991,7 +1020,8 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 ui.title.addEventListener('click', () => { unlockAudio(); if (S.mode === 'title') showScreen('select'); });
-ui.charOk.addEventListener('click', () => showScreen('garage')); ui.garageOk.addEventListener('click', () => showScreen('trackSel')); ui.garageBack.addEventListener('click', () => showScreen('select')); ui.raceBtn.addEventListener('click', () => { S.gp = null; startRace(); }); ui.gpBtn.addEventListener('click', () => startGP(0)); ui.gp2Btn.addEventListener('click', () => { if (summitUnlocked()) startGP(1); }); ui.againBtn.addEventListener('click', afterFinish);
+ui.charOk.addEventListener('click', () => showScreen('garage')); ui.garageOk.addEventListener('click', () => showScreen('trackSel')); ui.garageBack.addEventListener('click', () => showScreen('select')); ui.raceBtn.addEventListener('click', () => { S.gp = null; startRace(); }); ui.gpBtn.addEventListener('click', () => startGP(0)); ui.gp2Btn.addEventListener('click', () => { if (cupUnlocked(1)) startGP(1); });
+ui.gp3Btn.addEventListener('click', () => { if (cupUnlocked(2)) startGP(2); }); ui.againBtn.addEventListener('click', afterFinish);
 ui.pauseBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (S.mode === 'pause') resumeGame(); else pauseGame(); });
 ui.resumeBtn.addEventListener('click', resumeGame); ui.restartBtn.addEventListener('click', () => { ui.pause.hidden = true; S.mode = S.prevMode; startRace(); }); ui.quitBtn.addEventListener('click', () => { ui.pause.hidden = true; S.gp = null; musicStop(); showScreen('trackSel'); });
 ui.pauseSettings.addEventListener('click', () => openSettings('pause')); ui.titleSettings.addEventListener('click', e => { e.stopPropagation(); openSettings('title'); }); ui.settingsBack.addEventListener('click', closeSettings);
@@ -1057,7 +1087,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.6'; // PEEKEE_VERSION=v9.6
+const VERSION = 'v9.7'; // PEEKEE_VERSION=v9.7
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);

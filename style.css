@@ -75,7 +75,7 @@
   .char .st{font-size:clamp(9px,1.4vmin,13px);font-weight:800;opacity:.75;letter-spacing:.06em;text-transform:uppercase;}
   .char.sel{border-color:var(--sun);transform:translateY(-4px) scale(1.04);background:#343A73;}
   .tracks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.2vmin;width:min(92%,860px);}
-  .trk canvas{max-height:16vmin;}
+  .trk canvas{max-height:12vmin;}
   .trk{border-radius:14px;border:3px solid transparent;padding:1vmin;cursor:pointer;pointer-events:auto;background:var(--navy2);transition:transform .12s;}
   .trk canvas{width:100%;aspect-ratio:1;display:block;border-radius:8px;}
   .trk .nm{font-family:var(--hud);letter-spacing:.04em;text-transform:uppercase;font-size:clamp(11px,1.9vmin,18px);margin-top:.4vmin;}
@@ -134,7 +134,9 @@
     .screen > .row .btn{font-size:clamp(13px,2.6vmin,22px);padding:.35em 1em;}
     .screen > .tag{align-self:flex-start;margin-left:2.4vmin;}
     .char canvas{max-height:15vmin;margin:0 auto;}
-    .trk canvas{max-height:12vmin;margin:0 auto;}
+    .trk canvas{max-height:8.5vmin;margin:0 auto;}
+    .tracks{gap:.7vmin;}
+    .trk{padding:.6vmin;}
     .roster,.tracks{width:96%;}
     .garage .row{position:absolute;top:2.2vmin;right:2.4vmin;}
     .gpanel{justify-content:flex-start;padding-top:2.4vmin;width:min(52%,460px);}

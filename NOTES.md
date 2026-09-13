@@ -108,11 +108,8 @@ push, so any single one can be reverted without losing the others.
    now reports `rain` so tests can see it.
    **Still needs a human verdict on how the wet handling feels** — 13% was chosen
    to be noticeable but not slippery, and only driving it can confirm that.
-4. **More circuits, and more variety in the existing ones** — beyond the current eight.
-   The owner specifically wants circuits that differ as *race tracks*, not just as
-   scenery: genuinely different corner types and rhythms — hairpins, long sweepers,
-   chicanes, esses, tightening corners, varied straight lengths — rather than eight
-   sets of similar bends in different colours.
+4. **More circuits** — **four added in v9.7** (twelve total, three cups). Still open:
+   the original eight are all still gentle sweepers, see below.
 5. **Better character portraits** — the roster art on the character-select screen.
 6. **Visual and graphics polish pass** — a further iteration on the whole look: more
    detail, more modern, smoother. Same "Xbox not SNES" bar as everything else. Must
@@ -121,6 +118,39 @@ push, so any single one can be reverted without losing the others.
 
 **Deferred:** gamepad support. It was considered and consciously left out of this
 round; revisit later.
+
+## Circuit design
+
+There are twelve circuits in three cups of four (`Math.floor(i / 4)` is the cup).
+A circuit is one entry in `TRACKS`: control points `[x, y, height]` in a 2400x2400
+world, plus colours, sky, scenery and music.
+
+**Design them with the checker, not by eye.** `splineFor` smooths the control points
+into a Catmull-Rom loop, and it overshoots badly when points are close together at a
+sharp angle - which silently produces a circuit that crosses itself or has a corner no
+kart can take. The scratch folder has `validate.mjs` (self-intersection, how close two
+parts of the lap pass, tightest corner radius, world bounds, gradient) and
+`profile.mjs` (longest straight, % of lap in corners, % in tight corners, direction
+changes). Run both before putting a new circuit in the game, then drive it.
+
+Thresholds calibrated against the shipped circuits: tightest corner radius >= 58,
+two parts of the lap no closer than ~160, gradient <= 0.42. New circuits should beat
+those comfortably (radius >= 66, gap >= 190).
+
+Measured character, so a new circuit can be aimed somewhere genuinely new:
+
+| circuit | longest straight | % corner | % tight | direction changes |
+| --- | --- | --- | --- | --- |
+| the original eight | 1484-3209 | 11-18 | 1-2 | 4-6 |
+| Salt Flats | 3129 | 10 | 0 | 4 |
+| Old Town | 1660 | 20 | 4 | 6 |
+| Thunder Bay | 1420 | 33 | 5 | 14 |
+| Emerald Terraces | 2129 | 22 | 3 | 4 |
+
+**Known gap:** the original eight are all within a few points of each other on every
+measure - they are all gentle sweepers with no hairpins. The four new ones add the
+variety. Redesigning the originals would finish the job, but it invalidates the saved
+best laps for those circuits, so it needs to be a deliberate call.
 
 ## Working style
 
