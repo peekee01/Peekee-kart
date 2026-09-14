@@ -110,6 +110,7 @@
   .btn{pointer-events:auto;font-family:var(--hud);letter-spacing:.08em;font-size:clamp(16px,3vmin,30px);background:var(--sun);color:#3B1E00;border:0;border-radius:12px;padding:.4em 1.2em;box-shadow:0 5px 0 #B8321F;cursor:pointer;touch-action:manipulation;}
   .btn.alt{background:var(--mint);box-shadow:0 5px 0 #157A57;}
   .btn.danger{background:var(--coral);color:#FFF6DC;box-shadow:0 5px 0 #8B1E22;}
+  .mobCup{display:none;}   /* phones only - see the coarse-pointer block below */
   .btn.locked{background:#3A3F63;color:rgba(255,246,220,.45);box-shadow:0 5px 0 #23263F;cursor:not-allowed;}
   .btn.locked:active{transform:none;box-shadow:0 5px 0 #23263F;}
   .unlockHint{font-weight:800;font-size:clamp(10px,1.5vmin,14px);letter-spacing:.08em;text-transform:uppercase;opacity:.6;min-height:1.2em;}
@@ -145,7 +146,14 @@
     .gpanel{justify-content:flex-start;padding-top:2.4vmin;width:min(52%,460px);}
     #finish .results{font-size:clamp(11px,2vmin,18px);gap:.3vmin 1.6vmin;}
     .boardLabel{display:none;}
-    .board{width:96%;gap:.6vmin;}
+    .board{width:96%;gap:.6vmin;grid-template-columns:repeat(6,minmax(0,1fr));}
     .bcard{padding:.5vmin .8vmin .6vmin;}
+    /* a phone screen has no room for twelve empty cards - show only circuits you
+       have actually set a time on, so a new player sees a clean title screen */
+    .bcard:not(.set){display:none;}
+    /* three cup buttons plus SINGLE RACE wrapped onto a second line and covered the
+       circuit list, so phones get one CUP button for the selected circuit's cup */
+    #gpBtn,#gp2Btn,#gp3Btn{display:none;}
+    .mobCup{display:inline-block;}
   }
   @media (prefers-reduced-motion: reduce){.press{animation:none;}}

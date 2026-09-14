@@ -60,6 +60,14 @@ A release is good when all of this holds:
 - then `window.__auto = true; window.__advance(75)` and `window.__state()` reports
   `finished: true`
 
+**Test the phone layout, every time.** Twice now a change has looked fine on a desktop
+viewport and been broken on a phone. Emulate it: Playwright context with
+`viewport: {width: 844, height: 390}, isMobile: true, hasTouch: true` (iPhone landscape -
+`hasTouch` is what makes the `pointer: coarse` CSS rules apply), then screenshot the
+title, racer, garage and circuit screens and LOOK at them. The two failure modes so far:
+the pinned top-right button row wrapping onto a second line and covering the screen
+below it, and content sized for a desktop swamping a 390px-tall screen.
+
 Take a screenshot too. The version check alone will still pass if `style.css` failed to
 load, so look at the picture: HUD panels, minimap and speed box should be styled.
 

@@ -876,7 +876,7 @@ function postFX() {
 }
 
 // ═══════════════════════ HUD & screens ═══════════════════════
-const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'optWeather', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'gp3Btn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
+const ui = {}; for (const id of ['hud', 'title', 'select', 'garage', 'trackSel', 'finish', 'models', 'paints', 'gstats', 'garageBack', 'garageOk', 'gp2Btn', 'mirror', 'diffSeg', 'pause', 'settings', 'lapTimes', 'pauseBtn', 'resumeBtn', 'restartBtn', 'pauseSettings', 'quitBtn', 'settingsBack', 'titleSettings', 'optMusic', 'optSfx', 'optEngine', 'optMirror', 'optPerf', 'optWeather', 'lap', 'pos', 'timeBox', 'speed', 'itemName', 'banner', 'center', 'results', 'roster', 'tracks', 'againBtn', 'mini', 'itemCanvas', 'trackName', 'finishTitle', 'finishTag', 'charOk', 'raceBtn', 'gpBtn', 'gp3Btn', 'gpMobBtn', 'board', 'unlockHint', 'progInfo', 'resetProg']) ui[id] = document.getElementById(id);
 const miniBase = document.createElement('canvas'); miniBase.width = 180; miniBase.height = 180;
 function drawOutline(c, size, xs, ys, lineW, col) { const k = size / WORLD; c.beginPath(); c.moveTo(xs[0] * k, ys[0] * k); for (let i = 1; i < xs.length; i++) c.lineTo(xs[i] * k, ys[i] * k); c.closePath(); c.lineCap = c.lineJoin = 'round'; c.lineWidth = lineW + 4; c.strokeStyle = 'rgba(0,0,0,0.55)'; c.stroke(); c.lineWidth = lineW; c.strokeStyle = col; c.stroke(); }
 function drawMiniBase() { const c = miniBase.getContext('2d'); c.clearRect(0, 0, 180, 180); drawOutline(c, 180, TX, TY, 9, '#E8E4D8'); const d = tdir(0), k = 180 / WORLD; c.strokeStyle = '#FF5A5F'; c.lineWidth = 4; c.beginPath(); c.moveTo(TX[0] * k - d[1] * 7, TY[0] * k + d[0] * 7); c.lineTo(TX[0] * k + d[1] * 7, TY[0] * k - d[0] * 7); c.stroke(); }
@@ -913,7 +913,7 @@ function updateHUD() {
 const bestFor = i => { try { return JSON.parse(localStorage.getItem('pk_best_' + i) || 'null'); } catch (e) { return null; } };
 function renderBoard() {
   ui.board.innerHTML = TRACKS.map((t, i) => { const b = bestFor(i), who = b && CHARS[b.ch] ? CHARS[b.ch].name : '';
-    return `<div class="bcard${b ? '' : ' empty'}"><div class="bn">${t.name}</div><div class="bt">${b ? fmtTime(b.time) : '—'}</div><div class="bw">${who}</div></div>`; }).join('');
+    return `<div class="bcard${b ? ' set' : ' empty'}"><div class="bn">${t.name}</div><div class="bt">${b ? fmtTime(b.time) : '—'}</div><div class="bw">${who}</div></div>`; }).join('');
 }
 // keep every locked/unlocked bit of UI in step with SAVE
 function refreshUnlocks() {
@@ -924,6 +924,7 @@ function refreshUnlocks() {
   }
   ui.unlockHint.textContent = !cupUnlocked(1) ? 'Finish on the podium in the Island Cup to unlock the Summit Cup'
     : !cupUnlocked(2) ? 'Finish on the podium in the Summit Cup to unlock the Frontier Cup' : '';
+  refreshMobCup();
   if (ui.paints.children.length) [...ui.paints.children].forEach((el, i) => el.classList.toggle('locked', i >= paintsUnlocked()));
   ui.progInfo.textContent = `Races finished ${SAVE.races} · Paints ${paintsUnlocked()} of ${PAINTS.length} · Cups open ${[0, 1, 2].filter(cupUnlocked).length} of 3`;
 }
@@ -967,7 +968,15 @@ function buildRoster() {
   refreshTracks();
 }
 function refreshRoster() { [...ui.roster.children].forEach((el, i) => el.classList.toggle('sel', i === S.sel)); }
-function refreshTracks() { [...ui.tracks.children].forEach((el, i) => el.classList.toggle('sel', i === S.trk)); }
+function refreshTracks() { [...ui.tracks.children].forEach((el, i) => el.classList.toggle('sel', i === S.trk)); refreshMobCup(); }
+// Phones show a single CUP button instead of three - four buttons wrapped onto a
+// second line and covered the circuit list. It starts the cup the selected circuit
+// belongs to, exactly like the G key on a keyboard.
+function refreshMobCup() {
+  const cup = Math.floor(S.trk / 4), on = cupUnlocked(cup);
+  ui.gpMobBtn.textContent = on ? CUPS[cup].toUpperCase() : CUPS[cup].toUpperCase() + ' · LOCKED';
+  ui.gpMobBtn.classList.toggle('locked', !on);
+}
 // blend two hex colours, for shading the portraits
 const mixHex = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), ch2 = sh => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
   return `rgb(${ch2(16)},${ch2(8)},${ch2(0)})`; };
@@ -1093,7 +1102,8 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => { keys[e.code] = false; });
 ui.title.addEventListener('click', () => { unlockAudio(); if (S.mode === 'title') showScreen('select'); });
 ui.charOk.addEventListener('click', () => showScreen('garage')); ui.garageOk.addEventListener('click', () => showScreen('trackSel')); ui.garageBack.addEventListener('click', () => showScreen('select')); ui.raceBtn.addEventListener('click', () => { S.gp = null; startRace(); }); ui.gpBtn.addEventListener('click', () => startGP(0)); ui.gp2Btn.addEventListener('click', () => { if (cupUnlocked(1)) startGP(1); });
-ui.gp3Btn.addEventListener('click', () => { if (cupUnlocked(2)) startGP(2); }); ui.againBtn.addEventListener('click', afterFinish);
+ui.gp3Btn.addEventListener('click', () => { if (cupUnlocked(2)) startGP(2); });
+ui.gpMobBtn.addEventListener('click', () => { const cup = Math.floor(S.trk / 4); if (cupUnlocked(cup)) startGP(cup); }); ui.againBtn.addEventListener('click', afterFinish);
 ui.pauseBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (S.mode === 'pause') resumeGame(); else pauseGame(); });
 ui.resumeBtn.addEventListener('click', resumeGame); ui.restartBtn.addEventListener('click', () => { ui.pause.hidden = true; S.mode = S.prevMode; startRace(); }); ui.quitBtn.addEventListener('click', () => { ui.pause.hidden = true; S.gp = null; musicStop(); showScreen('trackSel'); });
 ui.pauseSettings.addEventListener('click', () => openSettings('pause')); ui.titleSettings.addEventListener('click', e => { e.stopPropagation(); openSettings('title'); }); ui.settingsBack.addEventListener('click', closeSettings);
@@ -1159,7 +1169,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.9'; // PEEKEE_VERSION=v9.9
+const VERSION = 'v9.10'; // PEEKEE_VERSION=v9.10
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
