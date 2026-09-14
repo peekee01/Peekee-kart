@@ -23,9 +23,9 @@ stale copy after a release.
 
 Three places must agree, or players get a stale mix of old and new files:
 
-1. `game.js`, near the end: `const VERSION = 'v9.11'; // PEEKEE_VERSION=v9.11` — both halves.
-2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.11 -->`
-3. `index.html`, the two `?v=9.11` query strings on the `style.css` and `game.js` links.
+1. `game.js`, near the end: `const VERSION = 'v9.12'; // PEEKEE_VERSION=v9.12` — both halves.
+2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.12 -->`
+3. `index.html`, the two `?v=9.12` query strings on the `style.css` and `game.js` links.
 
 Why the HTML comment matters: a few seconds after loading, the game re-fetches
 `index.html` with `cache: 'no-store'` and looks for the `PEEKEE_VERSION=` marker. If it
@@ -33,7 +33,7 @@ finds a version different from the one baked into `game.js`, it force-reloads on
 that's the automatic stale-cache rescue. The marker has to live in the HTML, because
 that's the only file the check can see.
 
-Current version: **v9.11**.
+Current version: **v9.12**.
 
 ## Testing recipe
 
@@ -52,13 +52,14 @@ Then serve the repo folder over plain HTTP and load it in headless Chromium with
 
 A release is good when all of this holds:
 
-- the title screen's footer reads `Peekee Kart v9.11` (or whatever the new version is)
+- the title screen's footer reads `Peekee Kart v9.12` (or whatever the new version is)
 - the browser console has **no errors** (SwiftShader "GPU stall due to ReadPixels"
   warnings are just software rendering — ignore them)
 - pressing Enter four times starts a race on Sunny Isle
 - every circuit can still be driven to the finish (the scratch folder's `drive-all.mjs`)
-- then `window.__auto = true; window.__advance(75)` and `window.__state()` reports
-  `finished: true`
+- then `window.__auto = true; window.__advance(120)` and `window.__state()` reports
+  `finished: true` (75 was enough before the v9.11 circuits; they are more technical, so
+  an auto-driven lap takes longer and 75 became marginal)
 
 **Test the phone layout, every time.** Twice now a change has looked fine on a desktop
 viewport and been broken on a phone. Emulate it: Playwright context with
@@ -78,6 +79,18 @@ Built into `game.js`, harmless during normal play:
 - `window.__auto = true` — hands the player's kart to the AI, so a race can run unattended
 - `window.__advance(sec)` — simulates `sec` seconds of racing instantly, no rendering
 - `window.__state()` — returns `{ mode, rain, lap, v, z, air, rank, idx, finished, jumps, hazards, gp }`
+
+## The three layers on top of the 3D view
+
+Order matters, and getting it wrong produces a black screen:
+
+- `#glow` — **additive** (`mix-blend-mode: screen`). Bloom and sun glare go here. The
+  first attempt drew bloom on `#fx`, which is alpha-composited over the 3D view, so a
+  strong bloom painted a dark copy of the scene *over* the scene and nearly everything
+  vanished. Anything meant to *add light* belongs on this layer.
+- `#fx` — normal alpha. Colour grade, boost tint, damage flash.
+- `#vignette` — a static CSS gradient, so it applies on menus too. `postFX` used to draw
+  its own vignette as well; that was doubling the corner falloff and has been removed.
 
 ## What this game is trying to be
 

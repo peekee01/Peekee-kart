@@ -862,16 +862,61 @@ function syncScene() {
 }
 
 // ═══════════════════════ post-processing overlay ═══════════════════════
-const fxCanvas = document.getElementById('fx'), fx = fxCanvas.getContext('2d'), bloomA = document.createElement('canvas'), bloomB = document.createElement('canvas');
+const fxCanvas = document.getElementById('fx'), fx = fxCanvas.getContext('2d');
+const glowCanvas = document.getElementById('glow'), glow = glowCanvas.getContext('2d');
+const bloomA = document.createElement('canvas'), bloomB = document.createElement('canvas');
+const _sunV = new THREE.Vector3(), _fwdV = new THREE.Vector3();
 function postFX() {
   const fw = fxCanvas.width, fh = fxCanvas.height; fx.clearRect(0, 0, fw, fh);
   const bw = Math.max(8, fw >> 3), bh = Math.max(8, fh >> 3); if (bloomA.width !== bw) { bloomA.width = bw; bloomA.height = bh; bloomB.width = bw >> 1; bloomB.height = bh >> 1; }
-  bloomA.getContext('2d').drawImage(canvas, 0, 0, bw, bh); bloomB.getContext('2d').drawImage(bloomA, 0, 0, bloomB.width, bloomB.height);
-  fx.globalCompositeOperation = 'screen'; fx.globalAlpha = T.night ? 0.26 : 0.09; fx.drawImage(bloomB, 0, 0, fw, fh); fx.globalAlpha = 1; fx.globalCompositeOperation = 'source-over';
+  const ba = bloomA.getContext('2d'), bb = bloomB.getContext('2d');
+  // Bright pass. Squaring the downsampled frame twice (multiply-onto-itself) leaves
+  // only what is genuinely bright, so lamps, neon, the sun and boost flames glow while
+  // mid-tones stay put. Without it the old code screened the whole frame back over
+  // itself, which was a flat haze rather than a bloom.
+  ba.globalCompositeOperation = 'source-over'; ba.clearRect(0, 0, bw, bh);
+  ba.drawImage(canvas, 0, 0, bw, bh);
+  ba.globalCompositeOperation = 'multiply'; ba.drawImage(bloomA, 0, 0); ba.drawImage(bloomA, 0, 0);
+  ba.globalCompositeOperation = 'source-over';
+  bb.clearRect(0, 0, bloomB.width, bloomB.height); bb.drawImage(bloomA, 0, 0, bloomB.width, bloomB.height);
+  glow.clearRect(0, 0, fw, fh);
+  glow.globalCompositeOperation = 'lighter';
+  glow.globalAlpha = T.night ? 0.85 : 0.5; glow.drawImage(bloomB, 0, 0, fw, fh);   // wide, soft halo
+  glow.globalAlpha = T.night ? 0.5 : 0.3; glow.drawImage(bloomA, 0, 0, fw, fh);    // tighter core
+
+  // Sun glare: a flare that only appears when you are actually driving towards the sun.
+  if (sun.userData.dir) {
+    camera.getWorldDirection(_fwdV);
+    const facing = _fwdV.dot(sun.userData.dir);
+    if (facing > 0.12) {
+      _sunV.copy(camera.position).addScaledVector(sun.userData.dir, 5000).project(camera);
+      const sx = (_sunV.x * 0.5 + 0.5) * fw, sy = (-_sunV.y * 0.5 + 0.5) * fh;
+      const k = Math.min(1, Math.pow((facing - 0.12) / 0.88, 2.2) * (T.sunI || 1) * 1.15);
+      if (k > 0.01) {
+        const col = T.sun || '#FFF3A8';
+        const core = glow.createRadialGradient(sx, sy, 0, sx, sy, fh * 0.42);
+        core.addColorStop(0, col); core.addColorStop(0.18, 'rgba(255,240,200,0.5)'); core.addColorStop(1, 'rgba(255,240,200,0)');
+        glow.globalAlpha = k * 0.55; glow.fillStyle = core; glow.fillRect(0, 0, fw, fh);
+        // horizontal streak, the giveaway that a camera is pointing at a light
+        const st = glow.createLinearGradient(sx - fw * 0.5, 0, sx + fw * 0.5, 0);
+        st.addColorStop(0, 'rgba(255,240,200,0)'); st.addColorStop(0.5, col); st.addColorStop(1, 'rgba(255,240,200,0)');
+        glow.globalAlpha = k * 0.3; glow.fillStyle = st; glow.fillRect(0, sy - fh * 0.012, fw, fh * 0.024);
+        // two faint ghosts along the line through the centre of the screen
+        for (const [t, r, a] of [[0.55, 0.055, 0.28], [1.35, 0.032, 0.2]]) {
+          const gx = sx + (fw / 2 - sx) * t, gy = sy + (fh / 2 - sy) * t;
+          const g = glow.createRadialGradient(gx, gy, 0, gx, gy, fh * r);
+          g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,240,200,0)');
+          glow.globalAlpha = k * a; glow.fillStyle = g; glow.fillRect(gx - fh * r, gy - fh * r, fh * r * 2, fh * r * 2);
+        }
+      }
+    }
+  }
+  glow.globalAlpha = 1; glow.globalCompositeOperation = 'source-over';
+
   const grade = fx.createLinearGradient(0, 0, 0, fh); grade.addColorStop(0, T.night ? 'rgba(60,40,140,0.16)' : 'rgba(255,214,150,0.1)'); grade.addColorStop(1, T.night ? 'rgba(0,20,60,0.18)' : 'rgba(40,80,160,0.08)');
   fx.globalCompositeOperation = 'overlay'; fx.fillStyle = grade; fx.fillRect(0, 0, fw, fh); fx.globalCompositeOperation = 'source-over';
-  const vg = fx.createRadialGradient(fw / 2, fh / 2, fh * 0.45, fw / 2, fh / 2, fh * 1.05); vg.addColorStop(0, 'rgba(0,0,10,0)'); vg.addColorStop(1, 'rgba(0,0,10,0.42)'); fx.fillStyle = vg; fx.fillRect(0, 0, fw, fh);
-  if (player && player.boost > 0) { const g = fx.createRadialGradient(fw / 2, fh / 2, fh * 0.35, fw / 2, fh / 2, fh * 0.8); g.addColorStop(0, 'rgba(255,122,31,0)'); g.addColorStop(1, 'rgba(255,122,31,0.3)'); fx.fillStyle = g; fx.fillRect(0, 0, fw, fh); fx.strokeStyle = 'rgba(255,246,220,0.45)'; fx.lineWidth = 2; for (let i = 0; i < 14; i++) { const a = Math.random() * 6.28, r0 = fh * (0.4 + Math.random() * 0.2), r1 = r0 + fh * 0.25; fx.beginPath(); fx.moveTo(fw / 2 + Math.cos(a) * r0, fh / 2 + Math.sin(a) * r0); fx.lineTo(fw / 2 + Math.cos(a) * r1, fh / 2 + Math.sin(a) * r1); fx.stroke(); } }
+  // (the corner falloff lives in style.css as #vignette - drawing it here too was doubling it)
+  if (player && player.boost > 0) { const g = fx.createRadialGradient(fw / 2, fh / 2, fh * 0.35, fw / 2, fh / 2, fh * 0.8); g.addColorStop(0, 'rgba(255,122,31,0)'); g.addColorStop(1, 'rgba(255,122,31,0.3)'); fx.fillStyle = g; fx.fillRect(0, 0, fw, fh); }
   if (player && player.shrink > 0) { fx.fillStyle = 'rgba(40,60,120,0.25)'; fx.fillRect(0, 0, fw, fh); }
   if (S.shake > 0.3 && Math.random() < 0.5) { fx.fillStyle = 'rgba(255,255,255,0.3)'; fx.fillRect(0, 0, fw, fh); }
 }
@@ -960,7 +1005,7 @@ function buildGarageUI() {
   ui.models.innerHTML = ''; KART_MODELS.forEach((m, i) => { const el = document.createElement('div'); el.className = 'mcard'; el.innerHTML = `<div class="nm">${m.name}</div><div class="st">${m.sub}</div>`; el.addEventListener('click', () => { S.model = i; garageRefresh(); }); ui.models.appendChild(el); });
   ui.paints.innerHTML = ''; PAINTS.forEach((p, i) => { const el = document.createElement('div'); el.className = 'swatch'; el.style.background = p; el.addEventListener('click', () => { if (i >= paintsUnlocked()) return; S.paint = p; garageRefresh(); }); ui.paints.appendChild(el); });
 }
-function renderGarage(dt) { gAngle += dt * 0.6; if (gKart) gKart.rotation.z = gAngle; renderer.render(gScene, gCam); fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height); }
+function renderGarage(dt) { gAngle += dt * 0.6; if (gKart) gKart.rotation.z = gAngle; renderer.render(gScene, gCam); fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height); glow.clearRect(0, 0, glowCanvas.width, glowCanvas.height); }
 function buildRoster() {
   ui.roster.innerHTML = '';
   CHARS.forEach((ch, i) => { const el = document.createElement('div'); el.className = 'char'; el.tabIndex = 0; const cv = document.createElement('canvas'); cv.width = 320; cv.height = 320; drawPortrait(cv.getContext('2d'), ch); el.appendChild(cv); const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = ch.name; el.appendChild(nm); const st = document.createElement('div'); st.className = 'st'; st.textContent = ch.kind + ' · ' + ch.st; el.appendChild(st); el.addEventListener('click', () => { S.sel = i; S.paint = CHARS[i].body; refreshRoster(); }); el.addEventListener('dblclick', () => { S.sel = i; S.paint = CHARS[i].body; showScreen('garage'); }); ui.roster.appendChild(el); });
@@ -1136,7 +1181,7 @@ for (const el of document.querySelectorAll('.tbtn')) {
   const end = e => { if (e.pointerId !== pid) return; pid = null; touch.steer = 0; pad.classList.remove('on'); knob.style.transform = ''; };
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, end);
 }
-function resize() { const r = fxCanvas.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); const w = Math.max(1, (r.width * dpr) | 0), h = Math.max(1, (r.height * dpr) | 0); fxCanvas.width = w; fxCanvas.height = h; renderer.setPixelRatio(dpr); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); gCam.aspect = camera.aspect; if (r.width < 900) gCam.setViewOffset(r.width, r.height, -r.width * 0.2, 0, r.width, r.height); else gCam.clearViewOffset(); gCam.updateProjectionMatrix(); }
+function resize() { const r = fxCanvas.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); const w = Math.max(1, (r.width * dpr) | 0), h = Math.max(1, (r.height * dpr) | 0); fxCanvas.width = w; fxCanvas.height = h; glowCanvas.width = w; glowCanvas.height = h; renderer.setPixelRatio(dpr); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); gCam.aspect = camera.aspect; if (r.width < 900) gCam.setViewOffset(r.width, r.height, -r.width * 0.2, 0, r.width, r.height); else gCam.clearViewOffset(); gCam.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 
 // ═══════════════════════ main loop ═══════════════════════
@@ -1170,7 +1215,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.11'; // PEEKEE_VERSION=v9.11
+const VERSION = 'v9.12'; // PEEKEE_VERSION=v9.12
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
