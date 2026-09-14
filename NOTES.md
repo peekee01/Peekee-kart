@@ -23,9 +23,9 @@ stale copy after a release.
 
 Three places must agree, or players get a stale mix of old and new files:
 
-1. `game.js`, near the end: `const VERSION = 'v9.9'; // PEEKEE_VERSION=v9.9` — both halves.
-2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.9 -->`
-3. `index.html`, the two `?v=9.9` query strings on the `style.css` and `game.js` links.
+1. `game.js`, near the end: `const VERSION = 'v9.11'; // PEEKEE_VERSION=v9.11` — both halves.
+2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.11 -->`
+3. `index.html`, the two `?v=9.11` query strings on the `style.css` and `game.js` links.
 
 Why the HTML comment matters: a few seconds after loading, the game re-fetches
 `index.html` with `cache: 'no-store'` and looks for the `PEEKEE_VERSION=` marker. If it
@@ -33,7 +33,7 @@ finds a version different from the one baked into `game.js`, it force-reloads on
 that's the automatic stale-cache rescue. The marker has to live in the HTML, because
 that's the only file the check can see.
 
-Current version: **v9.9**.
+Current version: **v9.11**.
 
 ## Testing recipe
 
@@ -52,7 +52,7 @@ Then serve the repo folder over plain HTTP and load it in headless Chromium with
 
 A release is good when all of this holds:
 
-- the title screen's footer reads `Peekee Kart v9.9` (or whatever the new version is)
+- the title screen's footer reads `Peekee Kart v9.11` (or whatever the new version is)
 - the browser console has **no errors** (SwiftShader "GPU stall due to ReadPixels"
   warnings are just software rendering — ignore them)
 - pressing Enter four times starts a race on Sunny Isle
@@ -117,8 +117,8 @@ push, so any single one can be reverted without losing the others.
    now reports `rain` so tests can see it.
    **Still needs a human verdict on how the wet handling feels** — 13% was chosen
    to be noticeable but not slippery, and only driving it can confirm that.
-4. **More circuits** — **four added in v9.7** (twelve total, three cups). Still open:
-   the original eight are all still gentle sweepers, see below.
+4. ~~**More circuits, and more variety**~~ — **four added in v9.7**, and the original
+   eight redesigned in v9.11. Twelve circuits, three cups, all measurably different.
 5. ~~**Better character portraits**~~ — **shipped in v9.8.** Drawn in a 120-unit space and scaled to a 320px canvas, with a racer-tinted backing plate (without it the near-navy helmets vanished into the card).
 6. ~~**Visual and graphics polish pass**~~ — **shipped in v9.9.** Sharper, softer
    shadows (3072 map, radius 2.2), noticeably smoother kart geometry, a corner
@@ -137,36 +137,62 @@ round; revisit later.
 
 ## Circuit design
 
-There are twelve circuits in three cups of four (`Math.floor(i / 4)` is the cup).
-A circuit is one entry in `TRACKS`: control points `[x, y, height]` in a 2400x2400
-world, plus colours, sky, scenery and music.
+Twelve circuits in three cups of four (`Math.floor(i / 4)` is the cup). A circuit is one
+entry in `TRACKS`: control points `[x, y, height]` in a 2400x2400 world, plus colours,
+sky, scenery and music.
 
-**Design them with the checker, not by eye.** `splineFor` smooths the control points
-into a Catmull-Rom loop, and it overshoots badly when points are close together at a
-sharp angle - which silently produces a circuit that crosses itself or has a corner no
-kart can take. The scratch folder has `validate.mjs` (self-intersection, how close two
-parts of the lap pass, tightest corner radius, world bounds, gradient) and
-`profile.mjs` (longest straight, % of lap in corners, % in tight corners, direction
-changes). Run both before putting a new circuit in the game, then drive it.
+**Do not hand-place control points.** Three separate attempts produced circuits that
+crossed themselves or had corners nothing could drive. Use the tools in the scratch
+folder instead:
 
-Thresholds calibrated against the shipped circuits: tightest corner radius >= 58,
-two parts of the lap no closer than ~160, gradient <= 0.42. New circuits should beat
-those comfortably (radius >= 66, gap >= 190).
+- `ring.mjs` — `buildRing(polygon, radiiPerCorner)` builds the control points. Design a
+  circuit as a polygon with a radius at each corner: small radius = a corner you brake
+  for, large = one you carry speed through. Heights are per corner and ramp smoothly
+  between them.
+- `validate.mjs` — self-intersection, closest approach between two parts of the lap,
+  tightest radius, world bounds, gradient.
+- `profile.mjs` — longest straight, % of lap in corners, % in tight corners, direction
+  changes. This is how you check a new circuit is actually *different*.
+- `redesign2.mjs` — the current designs, and the pattern to copy.
 
-Measured character, so a new circuit can be aimed somewhere genuinely new:
+Three traps, all of which cost real time:
+
+1. **Every circuit must be a simple ring.** A serpentine (three or more legs folded back
+   and forth) cannot close without crossing itself — the closing leg always cuts through
+   an earlier fold. Put features on the ring's edges instead of folding it.
+2. **Control points must be evenly spaced.** The game's spline is uniform Catmull-Rom,
+   which overshoots wherever spacing changes sharply. Arc points 40 apart next to
+   straight points 260 apart produced radius-3 spikes that read as invisible walls.
+   `buildRing` resamples the whole lap at a constant ~55 units to avoid this.
+3. **Two fillets sharing a short edge must not overlap**, or the "straight" between them
+   runs backwards and the spline folds. `buildRing` shrinks both radii until they fit.
+
+Thresholds calibrated against shipped circuits: tightest radius >= 58, two parts of the
+lap no closer than ~170, gradient <= 0.42.
+
+Measured character of the current roster — aim a new circuit somewhere not already taken:
 
 | circuit | longest straight | % corner | % tight | direction changes |
 | --- | --- | --- | --- | --- |
-| the original eight | 1484-3209 | 11-18 | 1-2 | 4-6 |
+| Sunny Isle | 1082 | 23 | 3 | 28 |
+| Ember Ridge | 681 | 23 | 3 | 24 |
+| Frostbite Pass | 1247 | 15 | 1 | 17 |
+| Neon Harbor | 1328 | 17 | 2 | 24 |
+| Canyon Run | 1353 | 24 | 3 | 13 |
+| Mossy Hollow | 265 | 41 | 1 | 11 |
+| Sky Garden | 815 | 24 | 3 | 18 |
+| Crystal Caves | 972 | 23 | 5 | 17 |
 | Salt Flats | 3129 | 10 | 0 | 4 |
 | Old Town | 1660 | 20 | 4 | 6 |
 | Thunder Bay | 1420 | 33 | 5 | 14 |
 | Emerald Terraces | 2129 | 22 | 3 | 4 |
 
-**Known gap:** the original eight are all within a few points of each other on every
-measure - they are all gentle sweepers with no hairpins. The four new ones add the
-variety. Redesigning the originals would finish the job, but it invalidates the saved
-best laps for those circuits, so it needs to be a deliberate call.
+For reference, before the v9.11 redesign the original eight all sat between 11-18%
+corner, 1-2% tight and 4-6 direction changes — which is exactly why they felt the same.
+
+**Lap records and layout changes.** Best laps are stored per circuit under
+`pk_best2_<i>`. If a circuit's layout ever changes again, bump that key prefix, or the
+board will show times nobody can match on a track that no longer exists.
 
 ## Working style
 
