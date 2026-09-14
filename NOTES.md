@@ -23,8 +23,8 @@ stale copy after a release.
 
 Three places must agree, or players get a stale mix of old and new files:
 
-1. `game.js`, near the end: `const VERSION = 'v9.13'; // PEEKEE_VERSION=v9.13` — both halves.
-2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.13 -->`
+1. `game.js`, near the end: `const VERSION = 'v9.14'; // PEEKEE_VERSION=v9.14` — both halves.
+2. `index.html`, in `<head>`: `<!-- PEEKEE_VERSION=v9.14 -->`
 3. `index.html`, the two `?v=9.13` query strings on the `style.css` and `game.js` links.
 
 Why the HTML comment matters: a few seconds after loading, the game re-fetches
@@ -33,7 +33,7 @@ finds a version different from the one baked into `game.js`, it force-reloads on
 that's the automatic stale-cache rescue. The marker has to live in the HTML, because
 that's the only file the check can see.
 
-Current version: **v9.13**.
+Current version: **v9.14**.
 
 ## Testing recipe
 
@@ -52,7 +52,7 @@ Then serve the repo folder over plain HTTP and load it in headless Chromium with
 
 A release is good when all of this holds:
 
-- the title screen's footer reads `Peekee Kart v9.13` (or whatever the new version is)
+- the title screen's footer reads `Peekee Kart v9.14` (or whatever the new version is)
 - the browser console has **no errors** (SwiftShader "GPU stall due to ReadPixels"
   warnings are just software rendering — ignore them)
 - pressing Enter four times starts a race on Sunny Isle

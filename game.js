@@ -470,7 +470,49 @@ function buildTrack(def) {
     scene.fog = new THREE.Fog(fogC, 900, 4200);
   }
   skidGeo.setDrawRange(0, 0); skidHead = 0; parts.length = 0;
+  buildGroundDetail(def);
   drawMiniBase();
+}
+
+// ═══════════════════════ ground detail ═══════════════════════
+// Scattered clutter just off the racing line - tufts, pebbles, shards. The ground is a
+// painted texture, so close up it reads as flat; a few hundred real little objects give
+// the verges depth as you go past. One InstancedMesh, so it is a single draw call, and
+// Performance mode skips it entirely.
+const DETAIL_KIND = { 'Sunny Isle': 'grass', 'Ember Ridge': 'rock', 'Frostbite Pass': 'rock', 'Neon Harbor': 'none',
+  'Canyon Run': 'rock', 'Mossy Hollow': 'grass', 'Sky Garden': 'grass', 'Crystal Caves': 'shard',
+  'Salt Flats': 'rock', 'Old Town': 'none', 'Thunder Bay': 'grass', 'Emerald Terraces': 'grass' };
+function tuftGeo() {
+  const pos = [], idx = [];
+  for (let b = 0; b < 3; b++) {
+    const a = b / 3 * 6.283 + 0.4, cx = Math.cos(a) * 0.8, cy = Math.sin(a) * 0.8, w = 0.8, h = 4.6 + b * 1.1, base = pos.length / 3;
+    pos.push(cx - Math.sin(a) * w, cy + Math.cos(a) * w, 0, cx + Math.sin(a) * w, cy - Math.cos(a) * w, 0, cx + Math.cos(a) * 1.5, cy + Math.sin(a) * 1.5, h);
+    idx.push(base, base + 1, base + 2);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+let detailMesh = null;
+function buildGroundDetail(def) {
+  if (detailMesh) { world.remove(detailMesh); detailMesh.geometry.dispose(); detailMesh.material.dispose(); detailMesh = null; }
+  const kind = DETAIL_KIND[def.name] || 'grass';
+  if (OPT.perf || kind === 'none') return;
+  const geo = kind === 'grass' ? tuftGeo() : kind === 'shard' ? new THREE.ConeGeometry(1.5, 7, 5).rotateX(Math.PI / 2).translate(0, 0, 3.5)
+    : new THREE.DodecahedronGeometry(2.1, 0);
+  const col = kind === 'grass' ? mixHex(def.mottle[0], '#000000', 0.16) : kind === 'shard' ? def.dots[0] : mixHex(def.mottle[0], '#000000', 0.18);
+  const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.92, metalness: 0, flatShading: kind !== 'grass', side: kind === 'grass' ? THREE.DoubleSide : THREE.FrontSide });
+  const N_DETAIL = 900, m = new THREE.InstancedMesh(geo, mat, N_DETAIL), dummy = new THREE.Object3D(), rnd = mulberry(11);
+  let placed = 0;
+  for (let i = 0; i < N_DETAIL * 2 && placed < N_DETAIL; i++) {
+    const k = (rnd() * N) | 0, d = tdir(k), side = rnd() < 0.5 ? -1 : 1, off = side * (ROADW + 16 + rnd() * 90);
+    const x = TX[k] - d[1] * off, y = TY[k] + d[0] * off;
+    if (onShortcut(x, y) >= 0) continue;                       // don't litter the dirt shortcut
+    dummy.position.set(x, y, groundH(x, y, k) - 0.4);
+    dummy.rotation.set(0, 0, rnd() * 6.283);
+    const sc = (kind === 'grass' ? 0.55 + rnd() * 0.6 : 0.7 + rnd() * 0.95); dummy.scale.set(sc, sc, sc * (0.8 + rnd() * 0.7));
+    dummy.updateMatrix(); m.setMatrixAt(placed++, dummy.matrix);
+  }
+  m.count = placed; m.frustumCulled = false; m.castShadow = false; m.receiveShadow = false;
+  world.add(m); detailMesh = m;
 }
 
 // ═══════════════════════ audio: engine, effects and a synthesized soundtrack ═══════════════════════
@@ -1019,6 +1061,7 @@ function applyOpt() {
   saveOpt(); if (musicState && AC) musicState.gain.gain.setTargetAtTime(musicOn ? 0.42 * OPT.music : 0, AC.currentTime, 0.2); if (sfxBus) sfxBus.gain.value = OPT.sfx;
   ui.mirror.style.display = OPT.mirror ? '' : 'none';
   renderer.shadowMap.enabled = !OPT.perf; sun.castShadow = !OPT.perf; renderer.setPixelRatio(OPT.perf ? 1 : Math.min(2, window.devicePixelRatio || 1)); resize();
+  if (T) buildGroundDetail(T);
   scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
 }
 // ── garage: live 3D preview of the chosen driver + kart + paint ──
@@ -1250,7 +1293,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.13'; // PEEKEE_VERSION=v9.13
+const VERSION = 'v9.14'; // PEEKEE_VERSION=v9.14
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
