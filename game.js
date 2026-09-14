@@ -864,7 +864,9 @@ function syncScene() {
 // ═══════════════════════ post-processing overlay ═══════════════════════
 const fxCanvas = document.getElementById('fx'), fx = fxCanvas.getContext('2d');
 const glowCanvas = document.getElementById('glow'), glow = glowCanvas.getContext('2d');
-const bloomA = document.createElement('canvas'), bloomB = document.createElement('canvas');
+const bloomA = document.createElement('canvas'), bloomB = document.createElement('canvas'), zoomC = document.createElement('canvas');
+// stable set of speed lines, so they streak rather than flicker frame to frame
+const SPEEDLINES = Array.from({ length: 22 }, (_, i) => ({ a: i / 22 * 6.283 + (i % 3) * 0.09, p: (i * 0.37) % 1, l: (i * 0.23) % 1 }));
 const _sunV = new THREE.Vector3(), _fwdV = new THREE.Vector3();
 function postFX() {
   const fw = fxCanvas.width, fh = fxCanvas.height; fx.clearRect(0, 0, fw, fh);
@@ -881,8 +883,8 @@ function postFX() {
   bb.clearRect(0, 0, bloomB.width, bloomB.height); bb.drawImage(bloomA, 0, 0, bloomB.width, bloomB.height);
   glow.clearRect(0, 0, fw, fh);
   glow.globalCompositeOperation = 'lighter';
-  glow.globalAlpha = T.night ? 0.85 : 0.5; glow.drawImage(bloomB, 0, 0, fw, fh);   // wide, soft halo
-  glow.globalAlpha = T.night ? 0.5 : 0.3; glow.drawImage(bloomA, 0, 0, fw, fh);    // tighter core
+  glow.globalAlpha = T.night ? 0.85 : 0.4; glow.drawImage(bloomB, 0, 0, fw, fh);   // wide, soft halo
+  glow.globalAlpha = T.night ? 0.5 : 0.22; glow.drawImage(bloomA, 0, 0, fw, fh);    // tighter core
 
   // Sun glare: a flare that only appears when you are actually driving towards the sun.
   if (sun.userData.dir) {
@@ -912,6 +914,39 @@ function postFX() {
     }
   }
   glow.globalAlpha = 1; glow.globalCompositeOperation = 'source-over';
+
+  // Speed. The camera already widens its field of view with speed and boost; these are
+  // the two things it was missing.
+  const spd = player ? Math.min(1, Math.max(0, (Math.abs(player.v) - 170) / 280)) : 0;
+  if (spd > 0.03 && !OPT.perf) {
+    // Radial blur: three progressively larger copies of a low-res frame, all centred, so
+    // they line up in the middle of the screen and smear at the edges. The copy is masked
+    // out towards the centre, which keeps the kart and the road ahead sharp.
+    const zw = Math.max(8, fw >> 2), zh = Math.max(8, fh >> 2);
+    if (zoomC.width !== zw) { zoomC.width = zw; zoomC.height = zh; }
+    const zc = zoomC.getContext('2d');
+    zc.globalCompositeOperation = 'source-over'; zc.clearRect(0, 0, zw, zh); zc.drawImage(canvas, 0, 0, zw, zh);
+    const m = zc.createRadialGradient(zw / 2, zh / 2, zh * 0.30, zw / 2, zh / 2, zh * 0.80);
+    m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)');
+    zc.globalCompositeOperation = 'destination-in'; zc.fillStyle = m; zc.fillRect(0, 0, zw, zh);
+    zc.globalCompositeOperation = 'source-over';
+    fx.globalAlpha = 0.16 * spd;
+    for (const k of [1.035, 1.075, 1.12]) { const w2 = fw * k, h2 = fh * k; fx.drawImage(zoomC, (fw - w2) / 2, (fh - h2) / 2, w2, h2); }
+    fx.globalAlpha = 1;
+  }
+  if (player && player.boost > 0) {
+    // speed lines, drawn on the additive layer so they read as light streaking past
+    glow.globalCompositeOperation = 'lighter'; glow.strokeStyle = '#FFD69A';
+    glow.lineWidth = Math.max(1.2, fh * 0.0035); glow.lineCap = 'round';
+    const cx = fw / 2, cy = fh / 2;
+    for (const L of SPEEDLINES) {
+      const t = (S.t * 1.9 + L.p) % 1, r0 = fh * (0.38 + t * 0.6), r1 = r0 + fh * (0.09 + L.l * 0.13);
+      glow.globalAlpha = Math.sin(t * Math.PI) * 0.45;
+      glow.beginPath(); glow.moveTo(cx + Math.cos(L.a) * r0 * 1.5, cy + Math.sin(L.a) * r0);
+      glow.lineTo(cx + Math.cos(L.a) * r1 * 1.5, cy + Math.sin(L.a) * r1); glow.stroke();
+    }
+    glow.globalAlpha = 1; glow.globalCompositeOperation = 'source-over';
+  }
 
   const grade = fx.createLinearGradient(0, 0, 0, fh); grade.addColorStop(0, T.night ? 'rgba(60,40,140,0.16)' : 'rgba(255,214,150,0.1)'); grade.addColorStop(1, T.night ? 'rgba(0,20,60,0.18)' : 'rgba(40,80,160,0.08)');
   fx.globalCompositeOperation = 'overlay'; fx.fillStyle = grade; fx.fillRect(0, 0, fw, fh); fx.globalCompositeOperation = 'source-over';
@@ -1215,7 +1250,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.12'; // PEEKEE_VERSION=v9.12
+const VERSION = 'v9.13'; // PEEKEE_VERSION=v9.13
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
