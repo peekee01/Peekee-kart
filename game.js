@@ -365,13 +365,46 @@ const SCN_CACHE = {};
 function sceneryModel(type, sc) {
   const g = new THREE.Group(); const s = sc.s;
   const add = (o) => { g.add(o); return o; };
+  const full = !OPT.perf;   // Performance mode builds the simpler silhouettes
   if (type === 'pine') { add(mesh(loftZGeom([{ z: 0, r: 2.6 }, { z: 18, r: 1.8 }], 8), mat('#5A3B1A', { rough: 0.9 })));
-    for (let i = 0; i < 3; i++) { add(mesh(loftZGeom([{ z: 12 + i * 15, r: 17 - i * 4.5 }, { z: 34 + i * 15, r: 0.2 }], 12, 0.1), mat(i % 2 ? '#1F6B44' : '#27804F', { rough: 0.9 }))); add(mesh(loftZGeom([{ z: 22 + i * 15, r: 9.5 - i * 2.6 }, { z: 34.5 + i * 15, r: 0.2 }], 12, 0.1), mat('#F4F8FC', { rough: 0.9 }))); } }
+    for (let i = 0; i < (full ? 4 : 3); i++) {
+      const z0 = 11 + i * 13, r0 = 18 - i * 3.9, tip = z0 + 23 - i * 1.5;
+      const t = mesh(loftZGeom([{ z: z0, r: r0 }, { z: tip, r: 0.2 }], 12, 0.1), mat(i % 2 ? '#1F6B44' : '#27804F', { rough: 0.9 }));
+      t.rotation.z = i * 0.5 + sc.ph;   // turn each tier so the silhouette is not perfectly radial
+      add(t);
+      const cap = mesh(loftZGeom([{ z: z0 + 9.5 - i, r: r0 * 0.63 }, { z: tip + 0.6, r: 0.2 }], 12, 0.1), mat('#F4F8FC', { rough: 0.9 }));
+      cap.rotation.z = t.rotation.z; add(cap);
+    } }
   else if (type === 'palm') { add(mesh(loftZGeom([{ z: 0, r: 3.2 }, { z: 20, r: 2.6, ox: 2 }, { z: 40, r: 2.2, ox: 5 }, { z: 58, r: 1.8, ox: 9 }, { z: 66, r: 1.6, ox: 11 }], 8), mat('#8B5A2B', { rough: 0.9 })));
-    for (let i = 0; i < 7; i++) { const f = mesh(loftGeom([{ x: 0, hw: 1.2, zc: 0, hh: 0.4 }, { x: 10, hw: 4.5, zc: 2, hh: 0.5 }, { x: 20, hw: 4.2, zc: -1, hh: 0.4 }, { x: 30, hw: 1.5, zc: -9, hh: 0.3 }], 8, 0.6), mat(i % 2 ? '#2E8B57' : '#3DA86A', { rough: 0.8 })); f.position.set(11, 0, 66); f.rotation.z = i / 7 * Math.PI * 2; add(f); }
+    // two tiers of fronds, each on its own pivot so it can arch and droop - the old
+    // version put seven identical fronds at one point, which read as a flat umbrella
+    const FRONDS = full ? 10 : 6;
+    for (let i = 0; i < FRONDS; i++) {
+      const tier = i % 2, piv = new THREE.Group(); piv.position.set(11, 0, 65.5);
+      piv.rotation.z = i / FRONDS * Math.PI * 2 + tier * 0.22 + sc.ph * 0.3;
+      const L = tier ? 24 : 31, tipDrop = tier ? -13 : -7;
+      const f = mesh(loftGeom([{ x: 0, hw: 1.1, zc: 0, hh: 0.4 }, { x: L * 0.33, hw: 4.3, zc: 2.4, hh: 0.5 }, { x: L * 0.66, hw: 4.0, zc: 0.4, hh: 0.4 }, { x: L, hw: 1.3, zc: tipDrop, hh: 0.3 }], 8, 0.6), mat(i % 3 ? '#2E8B57' : '#3DA86A', { rough: 0.8 }));
+      f.rotation.y = tier ? 0.20 : -0.10;
+      piv.add(f); add(piv);
+    }
+    for (const [cx, cy] of [[9, 2.5], [12.5, -1.5], [10, -3]]) { const n = mesh(new THREE.SphereGeometry(1.9, 10, 8), mat('#6B4A2A', { rough: 0.85 })); n.position.set(cx, cy, 62.5); add(n); }
     const nut = mesh(new THREE.SphereGeometry(3, 10, 8), mat('#5A3B1A')); nut.position.set(11, 0, 65); add(nut); }
-  else if (type === 'rock') { add(mesh(loftZGeom([{ z: -2, r: 14, ry: 10 }, { z: 3, r: 19, ry: 13 }, { z: 9, r: 15, ry: 10.5 }, { z: 14, r: 7, ry: 5 }, { z: 16, r: 0.5, ry: 0.5 }], 10, 0.3), mat('#8E8E82', { rough: 0.95, flat: true }))); }
-  else if (type === 'bush') { add(mesh(loftZGeom([{ z: 0, r: 10 }, { z: 6, r: 15 }, { z: 12, r: 13 }, { z: 18, r: 5 }, { z: 20, r: 0.4 }], 12, 0.25), mat('#2E8B57', { rough: 0.9 }))); for (const [x, y, z] of [[7, 6, 13], [-8, 3, 15], [2, -9, 12]]) { const b = mesh(new THREE.SphereGeometry(2.2, 8, 6), mat('#FF5A5F', { rough: 0.5 })); b.position.set(x, y, z); add(b); } }
+  else if (type === 'rock') {
+    // a cluster reads far better than one boulder, and the sizes vary per instance
+    const shades = ['#8E8E82', '#7C7C72', '#9A9A8E'];
+    for (const [ox, oy, k, tilt] of (full ? [[0, 0, 1, 0], [13, -9, 0.52, 0.5], [-11, 8, 0.38, -0.7]] : [[0, 0, 1, 0]])) {
+      const b = mesh(loftZGeom([{ z: -2, r: 14, ry: 10 }, { z: 3, r: 19, ry: 13 }, { z: 9, r: 15, ry: 10.5 }, { z: 14, r: 7, ry: 5 }, { z: 16, r: 0.5, ry: 0.5 }], 10, 0.3), mat(shades[(sc.ph * 3 | 0) % 3], { rough: 0.95, flat: true }));
+      b.position.set(ox, oy, 0); b.scale.setScalar(k); b.rotation.z = tilt + sc.ph; add(b);
+    }
+  }
+  else if (type === 'bush') {
+    // three overlapping lobes give an organic outline; one blob looked moulded
+    for (const [ox, oy, k, col] of (full ? [[0, 0, 1, '#2E8B57'], [8, 5, 0.62, '#359961'], [-7, 6, 0.5, '#287A4C']] : [[0, 0, 1, '#2E8B57']])) {
+      const b = mesh(loftZGeom([{ z: 0, r: 10 }, { z: 6, r: 15 }, { z: 12, r: 13 }, { z: 18, r: 5 }, { z: 20, r: 0.4 }], 12, 0.25), mat(col, { rough: 0.9 }));
+      b.position.set(ox, oy, 0); b.scale.setScalar(k); add(b);
+    }
+    for (const [x, y, z] of [[7, 6, 13], [-8, 3, 15], [2, -9, 12]]) { const b = mesh(new THREE.SphereGeometry(2.2, 10, 8), mat('#FF5A5F', { rough: 0.5 })); b.position.set(x, y, z); add(b); }
+  }
   else if (type === 'tyres') { const t = mat('#26282F', { rough: 0.95 }); for (let i = 0; i < 3; i++) { const r = mesh(new THREE.TorusGeometry(5.2, 2.4, 10, 20), i === 2 && sc.ph ? mat('#C8332A', { rough: 0.8 }) : t); r.position.z = 2.5 + i * 4.8; add(r); } }
   else if (type === 'deadtree') { const m = mat('#2A1A16', { rough: 0.95 }); add(mesh(loftZGeom([{ z: 0, r: 3 }, { z: 28, r: 2, ox: 1 }, { z: 48, r: 1, ox: 3 }, { z: 52, r: 0.2, ox: 3 }], 7), m)); add(mesh(loftZGeom([{ z: 26, r: 1.6, ox: 1 }, { z: 46, r: 0.6, ox: -12, oy: 3 }, { z: 48, r: 0.1, ox: -13, oy: 3 }], 6), m)); add(mesh(loftZGeom([{ z: 34, r: 1.3, ox: 2 }, { z: 56, r: 0.5, ox: 12, oy: -4 }, { z: 58, r: 0.1, ox: 12, oy: -4 }], 6), m)); }
   else if (type === 'snowman') { const w = mat('#FFFFFF', { rough: 0.9 }); for (const [z, r] of [[10, 11], [27, 8.5], [41, 6.5]]) { const b = mesh(new THREE.SphereGeometry(r, 16, 12), w); b.position.z = z; add(b); } add(boxM(0, 0, 49, 9, 9, 2, mat('#1B1F3B'))); add(boxM(0, 0, 54, 6, 6, 8, mat('#1B1F3B'))); const nose = mesh(new THREE.ConeGeometry(1.2, 8, 8), mat('#FF7A1F')); nose.rotation.z = -Math.PI / 2; nose.position.set(9, 0, 42); add(nose); }
@@ -1293,7 +1326,7 @@ try { const d = +localStorage.getItem('pk_diff'); if (d >= 0 && d <= 2) S.diff =
 const refreshDiff = () => [...ui.diffSeg.querySelectorAll('button')].forEach(b => b.classList.toggle('sel', +b.dataset.d === S.diff));
 ui.diffSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.diff = +b.dataset.d; try { localStorage.setItem('pk_diff', S.diff); } catch (e2) {} refreshDiff(); }); refreshDiff();
 // ── version stamp + stale-cache guard: if the server has a newer build than the one the browser cached, force a fresh load ──
-const VERSION = 'v9.14'; // PEEKEE_VERSION=v9.14
+const VERSION = 'v9.15'; // PEEKEE_VERSION=v9.15
 renderBoard(); refreshUnlocks();
 document.getElementById('note').textContent = 'Peekee Kart ' + VERSION + ' · an original kart racer made with Claude · WASD works too · phones: drag the left side to steer, DRIFT on the right';
 setTimeout(() => { try { fetch(location.href, { cache: 'no-store' }).then(r => r.text()).then(t => { const m = t.match(/PEEKEE_VERSION=([\w.]+)/); if (m && m[1] !== VERSION && !sessionStorage.getItem('pk_reloaded')) { sessionStorage.setItem('pk_reloaded', '1'); fetch(location.href, { cache: 'reload' }).then(() => location.reload()); } }).catch(() => {}); } catch (e) {} }, 1500);
